@@ -96,6 +96,22 @@ def probe_dbnomics():
         except Exception as e:
             LOG.append(f"probe {q} fail {e}")
 
+
+def cn_merged():
+    """중국 M2: 여러 소스를 이어붙임 (뒤쪽 소스가 우선). 각 소스 단위는 normalize로 맞춤"""
+    parts = []
+    for nm, fn in (("FRED", lambda: fred("MYAGM2CNM189N")), ("IFS", lambda: dbnomics("IMF/IFS/M.CN.FDSB_XDC")),
+                   ("IFS2", lambda: dbnomics("IMF/IFS/M.CN.FDSBM_XDC")), ("NBS", lambda: dbnomics("NBS/M_A0D01/A0D0101"))):
+        try:
+            m = normalize(fn(), "CN"); parts.append(m)
+            LOG.append(f"CN part {nm} {min(m)}~{max(m)} n={len(m)}")
+        except Exception as e:
+            LOG.append(f"CN part {nm} fail {str(e)[:80]}")
+    out = {}
+    for m in parts: out.update(m)
+    if not out: raise ValueError("CN 소스 없음")
+    return out
+
 # 나라별 M2(현지 통화) 정상 크기 범위 — 원자료 단위(백만·십억)를 자동 보정
 SCALE = {"US": (1e13, 1e14), "EU": (8e12, 4e13), "CN": (1e14, 1e15), "JP": (8e14, 4e15), "GB": (1e12, 1e13)}
 def normalize(m, name):
@@ -115,12 +131,11 @@ def global_m2():
     countries = [
         ("US", [lambda: fred("M2SL")], None, False),
         ("EU", [ecb_m2, lambda: dbnomics("ECB/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E")], "EXUSEU", False),
-        ("CN", [nbs_m2, lambda: dbnomics("NBS/M_A0D01/A0D0101")], "EXCHUS", True),
+        ("CN", [cn_merged], "EXCHUS", True),
         ("JP", [lambda: boj("MAM1NAM2M2MO"), lambda: dbnomics("BOJ/MD02/MAM1NAM2M2MO"),
                 lambda: dbnomics("IMF/IFS/M.JP.FMB_XDC"), lambda: fred("MABMM301JPM189S")], "EXJPUS", True),
         ("GB", [lambda: boe("LPMAUYN"), lambda: dbnomics("BOE/6/LPMAUYN"), lambda: dbnomics("IMF/IFS/M.GB.FMB_XDC")], "EXUSUK", False),
     ]
-    probe_dbnomics()
     now = datetime.now(timezone.utc).strftime("%Y-%m")
     series, used = [], []
     for name, cands, fx, inv in countries:
