@@ -20,7 +20,7 @@ def get(url, tries=2, uas=({"User-Agent": "curl/8.5.0"}, UA)):
     raise last
 
 def yahoo(sym, iv):
-    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={ {"1wk": "10y", "1d": "5y"}.get(iv, "max") }&interval={iv}"))
+    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={ {"1wk": "10y", "1d": "5y", "1mo": "20y"}.get(iv, "max") }&interval={iv}"))
     res = j["chart"]["result"][0]
     q = res["indicators"]["quote"][0]
     out = []
@@ -107,6 +107,9 @@ for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
                      ("MSTR_1d", "MSTR", "1d"), ("NDX_1mo", "%5ENDX", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
     try:
         data["ohlc"][key] = yahoo(sym, iv)
+        r = data["ohlc"][key]
+        if iv == "1mo" and len(r) > 3 and (r[-2][0] - r[-3][0]) > 45 * 86400:
+            LOG.append(f"{key}: 월봉 간격 이상(분기봉 의심)")
         print(key, len(data["ohlc"][key]))
     except Exception as e:
         print("FAIL", key, e)
