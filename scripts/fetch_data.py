@@ -20,7 +20,7 @@ def get(url, tries=2, uas=({"User-Agent": "curl/8.5.0"}, UA)):
     raise last
 
 def yahoo(sym, iv):
-    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={"10y" if iv=="1wk" else "max"}&interval={iv}"))
+    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={ {"1wk": "10y", "1d": "5y"}.get(iv, "max") }&interval={iv}"))
     res = j["chart"]["result"][0]
     q = res["indicators"]["quote"][0]
     out = []
@@ -28,6 +28,14 @@ def yahoo(sym, iv):
         if q["close"][i] is None:
             continue
         out.append([t, *(round(q[k][i], 4) if q[k][i] is not None else q["close"][i] for k in ("open", "high", "low", "close"))])
+    # Yahoo가 진행 중인 봉을 한 번 더 붙여 보내는 경우 → 직전 봉에 합침 (TradingView와 값 일치)
+    if len(out) >= 2:
+        a, b = out[-2], out[-1]
+        da, db = datetime.fromtimestamp(a[0], timezone.utc), datetime.fromtimestamp(b[0], timezone.utc)
+        same = ((iv == "1mo" and (da.year, da.month) == (db.year, db.month)) or
+                (iv == "1wk" and (db - da).days < 7) or (iv == "1d" and da.date() == db.date()))
+        if same:
+            out[-2:] = [[a[0], a[1], max(a[2], b[2]), min(a[3], b[3]), b[4]]]
     return out  # [unix, o, h, l, c]
 
 def fred(sid):
@@ -95,7 +103,8 @@ def global_m2():
 
 data = {"updated": datetime.now(timezone.utc).isoformat(timespec="minutes"), "ohlc": {}}
 for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
-                     ("MSTR_1mo", "MSTR", "1mo"), ("NDX_1wk", "%5ENDX", "1wk")]:
+                     ("MSTR_1mo", "MSTR", "1mo"), ("NDX_1wk", "%5ENDX", "1wk"),
+                     ("MSTR_1d", "MSTR", "1d"), ("NDX_1mo", "%5ENDX", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
     try:
         data["ohlc"][key] = yahoo(sym, iv)
         print(key, len(data["ohlc"][key]))
@@ -104,7 +113,7 @@ for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
 data["m2"] = global_m2()
 data["log"] = LOG[-20:]
 print("M2 rows", len(data["m2"]["rows"]), data["m2"]["countries"])
-if len(data["ohlc"]) < 4:
+if not all(k in data["ohlc"] for k in ("TQQQ_1mo", "MSTR_1wk", "MSTR_1mo", "NDX_1wk")):
     raise SystemExit("일부 시세를 받지 못함 — 기존 data.json 유지")
 with open("data.json", "w") as f:
     json.dump(data, f, separators=(",", ":"))

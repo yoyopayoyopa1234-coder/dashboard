@@ -1,0 +1,131 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MSTR · TQQQ 기술적 점검</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  
+  :root {
+    --bg:#0e1114; --panel:#161a1f; --line:#262c34; --fg:#e7eaee; --muted:#8b94a2;
+    --accent:#f0b429; --bull:#e5484d; --bear:#3b82f6; --ok:#5ad445; --warn:#f0a030;
+    --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    color-scheme:dark;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:var(--sans); font-size:15px; line-height:1.65; }
+  .wrap { max-width:760px; margin:0 auto; padding-inline:16px; padding-block:20px 56px; display:flex; flex-direction:column; gap:22px; }
+  header { display:flex; flex-direction:column; gap:4px; }
+  .eyebrow { font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  h1 { margin:0; font-size:26px; line-height:1.25; text-wrap:balance; }
+  h2 { margin:0; font-size:19px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  h2 .px { font-family:var(--mono); font-size:15px; color:var(--accent); font-weight:600; }
+  h3 { margin:0; font-size:13px; letter-spacing:.06em; color:var(--muted); font-weight:500; }
+  p { margin:0; }
+  .num { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  .bl { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; display:grid; gap:10px; }
+  .bl-row { display:grid; grid-template-columns:64px 1fr; gap:10px; align-items:start; }
+  .tag { font-family:var(--mono); font-size:12px; font-weight:600; padding:2px 0; color:var(--accent); }
+  .pill { display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:999px; margin-right:6px; vertical-align:1px; }
+  .p-hot { background:rgba(229,72,77,.16); color:#ff8a8d; }
+  .p-turn { background:rgba(90,212,69,.14); color:#8be37a; }
+  .p-mix { background:rgba(240,160,48,.15); color:#f5c06a; }
+  section.card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:16px; }
+  .gauges { display:grid; gap:12px; }
+  .g { display:grid; gap:4px; }
+  .g-top { display:flex; justify-content:space-between; font-size:13px; gap:8px; }
+  .g-top span:last-child { font-family:var(--mono); color:var(--fg); }
+  .track { position:relative; height:8px; border-radius:4px; background:linear-gradient(90deg, rgba(59,130,246,.35), rgba(139,148,162,.18) 50%, rgba(229,72,77,.35)); }
+  .track.vix { background:linear-gradient(90deg, rgba(139,148,162,.18), rgba(90,212,69,.4)); }
+  .mark { position:absolute; top:-4px; width:3px; height:16px; background:var(--fg); border-radius:2px; transform:translateX(-50%); }
+  .tick { position:absolute; top:-2px; width:1px; height:12px; background:var(--muted); }
+  .g-cap { display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .levels { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-weight:500; color:var(--muted); font-size:12px; }
+  td.r, th.r { text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .up { color:var(--bull); } .dn { color:var(--bear); }
+  .read { display:grid; gap:8px; }
+  .read p { padding-left:12px; border-left:2px solid var(--line); }
+  .read b { color:var(--fg); }
+  .sc { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+  .sc > div { border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:grid; gap:4px; min-width:0; font-size:13.5px; }
+  .sc .h { font-weight:700; font-size:13px; }
+  .sc .h.b { color:#ff8a8d; } .sc .h.n { color:#f5c06a; } .sc .h.s { color:#7fb0ff; }
+  ol.check { margin:0; padding-left:20px; display:grid; gap:6px; font-size:14px; }
+  .fine { font-size:12px; color:var(--muted); line-height:1.6; }
+  @media (max-width:480px){ h1 { font-size:22px; } .bl-row { grid-template-columns:52px 1fr; } }
+
+  a { color:var(--accent); }
+  .on { color:var(--ok); }
+</style></head><body><div class="wrap">
+<header><span class="eyebrow">2026.10.13 00:53 자동 생성 · 시세 10.13 00:13 KST 기준 · <a href="./">차트 보기</a></span>
+<h1>MSTR · TQQQ 기술적 점검</h1></header>
+
+<div class="bl"><h3>한 줄 판단</h3>
+<div class="bl-row"><span class="tag">TQQQ</span><p><span class="pill p-hot">과열권</span>월봉 BB 상단 근처이고 Vix Fix는 바닥(공포 없음)입니다. 추세는 강하지만 새로 사기엔 유리한 자리가 아니고, 보유 중이면 지킬 선을 정해둘 구간입니다.</p></div>
+<div class="bl-row"><span class="tag">MSTR</span><p><span class="pill p-mix">바닥 다지기</span>최근 1년 안에 월봉 Vix Fix 투매 신호가 나왔지만 일봉 218일선 아래입니다. 바닥 확인 전 단계입니다.</p></div>
+<div class="bl-row"><span class="tag">NDX</span><p><span class="pill p-mix">데이터 없음</span>NDX 월봉 데이터를 받지 못했습니다.</p></div></div>
+
+<section class="card"><h2>TQQQ <span class="px">79.71</span><span class="eyebrow">월봉 · 이번 달 +2.2%</span></h2>
+<div class="gauges">
+<div class="g"><div class="g-top"><span>BB 20/2 안의 위치 (%b)</span><span>0.86</span></div>
+<div class="track"><span class="tick" style="left:50%"></span><span class="mark" style="left:86.3%"></span></div><div class="g-cap"><span>하단 21.79</span><span>중심 55.36</span><span>상단 88.94</span></div></div>
+<div class="g"><div class="g-top"><span>Williams Vix Fix (공포 지수)</span><span>9.09 / 기준 68.54</span></div>
+<div class="track vix"><span class="tick" style="left:85%"></span><span class="mark" style="left:11.3%"></span></div><div class="g-cap"><span>0 무관심</span><span>68.5 이상 = 투매 신호</span></div></div>
+</div>
+<div class="levels"><table><thead><tr><th>가격대</th><th class="r">가격</th><th class="r">현재가 대비</th><th>의미</th></tr></thead><tbody>
+<tr><td>월봉 BB 상단</td><td class="r">88.94</td><td class="r up">+11.6%</td><td>추세가 이어질 때 1차 저항</td></tr>
+<tr><td>현재가</td><td class="r">79.71</td><td class="r">—</td><td></td></tr>
+<tr><td>월봉 BB 중심</td><td class="r">55.36</td><td class="r dn">-30.5%</td><td>강세장 조정의 통상적인 도착점</td></tr>
+<tr><td>월봉 BB 하단</td><td class="r">21.79</td><td class="r dn">-72.7%</td><td>2022년형 약세장 시나리오</td></tr>
+</tbody></table></div>
+<div class="read"><p><b>월봉 Vix Fix 녹색 구간</b>은 과거 2011.08, 2018.10, 2022.01에 시작됐습니다. 마지막 녹색 달은 2025.04입니다. 지금 Vix Fix는 9.1로 기준선 68.5의 13% 수준입니다. 공포가 거의 없는 상태라 이 지표로는 "조심할 때"에 가깝습니다.</p><p><b>위로 남은 거리 +12%, 아래 BB 중심선까지 -31%.</b> 손익비가 불리한 자리입니다. 3배 레버리지는 나스닥이 −10%만 빠져도 대략 −30% 가까이 움직입니다.</p><p><b>추세 자체는 상승입니다.</b> 월봉 BB 상단을 타고 오르는 흐름은 몇 달씩 이어지기도 합니다. 과열이 곧바로 하락을 뜻하지는 않습니다.</p></div>
+<div class="sc">
+<div><span class="h b">상승 지속</span><span>월봉 종가가 BB 상단(89) 위에서 마감 → 밴드 워킹. 보유분은 추세 추종, 신규는 분할로만.</span></div>
+<div><span class="h n">횡보·조정</span><span>BB 중심(55)까지는 강세장 안의 정상 조정 범위.</span></div>
+<div><span class="h s">추세 이탈</span><span>월봉 종가가 BB 중심 아래 + Vix Fix 녹색 전환. 2022년형. 대신 그 녹색 신호가 역사적으로 다음 매수 자리였습니다.</span></div>
+</div></section>
+
+<section class="card"><h2>MSTR <span class="px">154.13</span><span class="eyebrow">월봉 · 일봉 · 이번 달 +0.7%</span></h2>
+<div class="gauges">
+<div class="g"><div class="g-top"><span>월봉 BB 20/2 안의 위치 (%b)</span><span>0.34</span></div>
+<div class="track"><span class="tick" style="left:50%"></span><span class="mark" style="left:34.1%"></span></div><div class="g-cap"><span>하단 7.49</span><span>중심 222.39</span><span>상단 437.28</span></div></div>
+<div class="g"><div class="g-top"><span>월봉 RSI 14</span><span>46.96</span></div>
+<div class="track"><span class="tick" style="left:30%"></span><span class="tick" style="left:70%"></span><span class="mark" style="left:47.0%"></span></div><div class="g-cap"><span>0</span><span>30</span><span>50</span><span>70</span><span>100</span></div></div>
+<div class="g"><div class="g-top"><span>월봉 Williams Vix Fix</span><span>63.54 / 기준 69.38</span></div>
+<div class="track vix"><span class="tick" style="left:85%"></span><span class="mark" style="left:77.8%"></span></div><div class="g-cap"><span>0</span><span>최근 12개월 녹색 9개월</span></div></div>
+</div>
+<div class="levels"><table><thead><tr><th>가격대</th><th class="r">가격</th><th class="r">현재가 대비</th><th>의미</th></tr></thead><tbody>
+<tr><td>사상 최고가 (24.11.01)</td><td class="r">543.00</td><td class="r up">+252.3%</td><td>현재 고점 대비 -72%</td></tr>
+<tr><td>월봉 BB 중심</td><td class="r">222.39</td><td class="r up">+44.3%</td><td>추세 전환을 확인하는 선. 여기 위 월봉 마감이 핵심</td></tr>
+
+<tr><td>현재가</td><td class="r">154.13</td><td class="r">—</td><td></td></tr>
+
+
+<tr><td>최근 저점 (2026.06)</td><td class="r">81.81</td><td class="r dn">-46.9%</td><td>바닥 신호가 무효가 되는 선</td></tr>
+</tbody></table></div>
+<div class="read"><p><b>최근 12개월 중 9개월이 월봉 Vix Fix 녹색(투매)</b>이었습니다. 과거 녹색 군집은 2017.07, 2022.01, 2025.11에 시작됐고, 2022년 군집 뒤에는 바닥을 잡고 2023~24년 대세 상승으로 갔습니다. 이번 달은 기준선 아래(빨강)로, 공포가 빠지기 시작했다는 뜻입니다.</p><p><b>월봉 RSI 47.0, 전월 46.8에서 반등 중.</b> 50을 넘으면 월봉 모멘텀이 상승 쪽으로 넘어갑니다.</p><p><b>Global M2는 최근 3개월 상승</b> ($42.4조, 2026-08, US+EU). MSTR은 고점 대비 -72%로, M2와 괴리가 큽니다. "유동성 따라잡기" 기대와 "비트코인·프리미엄(mNAV) 축소가 더 크게 작용한다"는 해석이 공존합니다.</p></div>
+<div class="sc">
+<div><span class="h b">추세 전환</span><span>218일선 회복 → 직전 고점 돌파 → 월봉 BB 중심 222 위 마감. RSI 50 돌파가 선행 신호.</span></div>
+<div><span class="h n">박스권</span><span>—~— 사이 등락. Vix Fix가 식으면서 바닥 다지기.</span></div>
+<div><span class="h s">반등 실패</span><span>일봉 218일선 아래 안착 후 저점 81.81 재시험. 이 저점이 깨지면 바닥 판단 자체가 무효.</span></div>
+</div></section>
+
+<section class="card"><h2>NDX · Global M2 <span class="px">30,678.64</span><span class="eyebrow">월봉 RSI —</span></h2>
+<div class="read">
+<p><b>NDX 월봉 RSI —.</b> 과매수(70)는 아닙니다.</p>
+<p><b>Global M2 최근 3개월 상승.</b> NDX는 2025~2026년 M2를 거의 그대로 따라 올랐습니다. M2가 계속 오르는 동안은 지수에 우호적입니다.</p>
+<p><b>금리.</b> FOMC 인하 확률이 높게 유지되면 M2·나스닥에 우호적이고, 확률이 급히 내려가면 과매수 상태의 TQQQ가 가장 먼저 흔들립니다. <a href="https://www.cmegroup.com/ko/markets/interest-rates/cme-fedwatch-tool.html">CME FedWatch</a>는 회의 2주 전부터 확인하세요.</p>
+</div></section>
+
+<section class="card"><h2>매일 볼 것</h2><ol class="check">
+
+
+<li>MSTR 월봉 RSI가 <span class="num">50</span>을 넘는지 (현재 47.0)</li>
+<li>TQQQ 월봉 Vix Fix가 녹색으로 바뀌는지 (현재 9.1 / 68.5)</li>
+<li>TQQQ가 <span class="num">89</span> 위로 마감하는지, <span class="num">55</span> 쪽으로 밀리는지</li>
+<li>Global M2 방향, FedWatch 다음 회의 인하 확률</li>
+</ol></section>
+
+<p class="fine">매일 Yahoo Finance·FRED·ECB 데이터로 TradingView와 같은 공식(BB 20/2, RSI 14, CM Williams Vix Fix 22/20/2/50/0.85, SMA 218 ±7%, 이격도 200)을 계산해 자동으로 쓰는 기술적 해석이며, 투자 자문이 아닙니다. 매매 시점과 비중은 본인의 자금 상황과 위험 감내도에 맞춰 직접 판단하세요. 진행 중인 월봉은 월말까지 값이 계속 바뀝니다.</p>
+</div></body></html>
