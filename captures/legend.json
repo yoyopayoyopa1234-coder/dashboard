@@ -1,0 +1,60 @@
+{
+ "mstr_rsi_vix": {
+  "title": "Chart Not Found — TradingView",
+  "url": "https://kr.tradingview.com/chart/soC8M4NK/?symbol=NASDAQ%3AMSTR",
+  "sources": [],
+  "series": [],
+  "legendAny": [],
+  "loginWall": false,
+  "secs": 49
+ },
+ "ndx_rsi_vix": {
+  "title": "Chart Not Found — TradingView",
+  "url": "https://kr.tradingview.com/chart/soC8M4NK/?symbol=NASDAQ%3ANDX",
+  "sources": [],
+  "series": [],
+  "legendAny": [],
+  "loginWall": false,
+  "secs": 49
+ },
+ "mstr_bb_vix": {
+  "title": "Chart Not Found — TradingView",
+  "url": "https://kr.tradingview.com/chart/VDpQAf5w/?symbol=NASDAQ%3AMSTR",
+  "sources": [],
+  "series": [],
+  "legendAny": [],
+  "loginWall": false,
+  "secs": 49
+ },
+ "tqqq_bb_vix": {
+  "title": "Chart Not Found — TradingView",
+  "url": "https://kr.tradingview.com/chart/VDpQAf5w/?symbol=NASDAQ%3ATQQQ",
+  "sources": [],
+  "series": [],
+  "legendAny": [],
+  "loginWall": false,
+  "secs": 49
+ },
+ "mstr_m2": {
+  "title": "Chart Not Found — TradingView",
+  "url": "https://kr.tradingview.com/chart/fyJI5SCU/?symbol=NASDAQ%3AMSTR",
+  "sources": [],
+  "series": [],
+  "legendAny": [],
+  "loginWall": false,
+  "secs": 49
+ },
+ "ndx_m2": {
+  "title": "Chart Not Found — TradingView",
+  "url": "https://kr.tradingview.com/chart/fyJI5SCU/?symbol=NASDAQ%3ANDX",
+  "sources": [],
+  "series": [],
+  "legendAny": [],
+  "loginWall": false,
+  "secs": 49
+ },
+ "_meta": {
+  "logged_in_cookie": false,
+  "at": "2026-10-12 16:17 UTC"
+ }
+}
