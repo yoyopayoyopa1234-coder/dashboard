@@ -60,9 +60,10 @@ if len(m2r) > 70:
     pk = max(range(max(0, n - 260), n + 1), key=lambda k: m2r[k][1])
     m2_peak = m2r[pk]
     m2_chg3, m2_from_pk = pct(m2_now[1], m2_3m[1]), pct(m2_now[1], m2_peak[1])
-    m2_dir = "하락" if m2_chg3 < -0.5 else ("상승" if m2_chg3 > 0.5 else "횡보")
+    m2_chg1 = pct(m2_now[1], m2r[n - 21][1])
+    m2_dir = "하락" if (m2_from_pk <= -0.7 and m2_chg1 < 0) or m2_chg1 < -0.7 else ("상승" if m2_chg1 > 0.5 else "횡보")
 else:
-    m2_now = None; m2_chg3 = 0.0
+    m2_now = None; m2_chg3 = m2_chg1 = m2_from_pk = 0.0; m2_dir = "—"
 
 # ── 판단 ──
 if c > M["m"]:
@@ -121,7 +122,7 @@ else:
 read.append(f"<b>월봉 RSI {M['rsi']:.1f} (전월 {M['rsi_prev']:.1f}).</b> " + ("50 위라 월봉 모멘텀이 상승 쪽입니다." if M["rsi"] >= 50 else "50을 넘으면 월봉 모멘텀이 상승 쪽으로 넘어갑니다. 2023년 상승 초입에도 RSI 50 돌파가 먼저 나왔습니다."))
 read.append(f"<b>월봉 BB {f(M['u'])} / {f(M['m'])} / {f(M['lo'])}, %b {M['pb']:.2f}.</b> " + ("중심선 위입니다." if c > M["m"] else f"중심선까지 {pct(M['m'], c):+.0f}% 남았습니다. 중심선 위 월봉 마감 전까지는 반등 국면으로 봅니다."))
 if m2_now:
-    read.append(f"<b>Global M2 ${m2_now[1]:.1f}조 — 3개월 {m2_chg3:+.1f}%, 1년 고점({m2_peak[0]}) 대비 {m2_from_pk:+.1f}%.</b> " +
+    read.append(f"<b>Global M2 ${m2_now[1]:.1f}조 — {m2_peak[0]} 고점 대비 {m2_from_pk:+.1f}%, 최근 1개월 {m2_chg1:+.1f}%로 {m2_dir} 중.</b> " +
                 ("유동성이 줄고 있어 MSTR 같은 고베타 자산에는 역풍입니다. 반등이 M2 반등 없이 이어질지가 관건입니다." if m2_dir == "하락" else
                  "유동성이 늘고 있어 우호적입니다." if m2_dir == "상승" else "유동성은 정체 상태입니다.") +
                 f" MSTR은 고점 대비 {pct(c, ath):.0f}%로 M2와 괴리가 큽니다.")
@@ -166,7 +167,7 @@ html = f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name
 <li>이격도(200) <span class="num">{disp:.0f}</span> — <span class="num">160</span> 위 과열, <span class="num">50</span> 아래 과매도</li>
 <li><span class="num">{f(swing, 0)}</span> 돌파 여부, 월말엔 월봉 종가가 BB 중심 <span class="num">{f(M["m"], 0)}</span> 근처인지</li>
 <li>월봉 RSI <span class="num">50</span> 돌파 (현재 {M["rsi"]:.1f})</li>
-<li>Global M2 방향 (현재 3개월 {m2_chg3:+.1f}%)</li>
+<li>Global M2 방향 (현재 {m2_dir if m2_now else "—"}, 고점 대비 {m2_from_pk if m2_now else 0:+.1f}%)</li>
 </ol></section>
 
 <p class="fine">Yahoo Finance·FRED·ECB·일본은행·영란은행 데이터로 TradingView와 같은 공식(SMA 5/218, 엔벨로프 218 +7%, 이격도 200, BB 20/2, RSI 14, CM Williams Vix Fix 22/20/2/50/0.85)을 계산해 자동으로 쓰는 기술적 해석이며, 투자 자문이 아닙니다. 매매 시점과 비중은 본인의 자금 상황과 위험 감내도에 맞춰 직접 판단하세요. 진행 중인 월봉은 월말까지 값이 계속 바뀝니다.</p>
