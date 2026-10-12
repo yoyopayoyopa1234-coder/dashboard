@@ -60,7 +60,7 @@
     <div class="plot" id="plot-c" style="height:700px"></div>
   </div>
 
-  <div class="status">데이터: Yahoo Finance · FRED (Global M2 = 미국+유로존+중국+일본 M2, 달러 환산). 하루 1회 캐시, 새로고침 버튼으로 강제 갱신.</div>
+  <div class="status">데이터: Yahoo Finance · FRED (Global M2 = 주요국 M2 합계, 달러 환산 · 서버에서 3시간마다 갱신). 하루 1회 캐시, 새로고침 버튼으로 강제 갱신.</div>
 </div>
 
 <script>
@@ -96,23 +96,9 @@ async function fred(id){
   if(!out.length) throw new Error(id); return out;
 }
 async function globalM2(){
-  if(DATA && DATA.m2 && DATA.m2.rows.length) return { rows:DATA.m2.rows.map(a=>({t:a[0],v:a[1]})), n:DATA.m2.n };
-  const ck=`m2:${todayKey}`, c=store.get(ck); if(c) return c;
-  const parts = [
-    { id:'M2SL',          mul:1e9 },                  // US, 십억달러
-    { id:'MYAGM2EZM196N', mul:1e6, fx:'EXUSEU' },     // 유로존 EUR → ×USD/EUR
-    { id:'MYAGM2CNM189N', mul:1,   fx:'EXCHUS', inv:1 }, // 중국 CNY → ÷CNY/USD
-    { id:'MYAGM2JPM189N', mul:1,   fx:'EXJPUS', inv:1 }, // 일본 JPY → ÷JPY/USD
-  ];
-  const series = await Promise.all(parts.map(async p=>{ try{
-      const m=await fred(p.id), f=p.fx?new Map((await fred(p.fx)).map(d=>[d.t,d.v])):null; let last=null; const o=new Map();
-      m.forEach(d=>{ let r=1; if(f){ r=f.get(d.t)??last; if(r==null) return; last=r; } o.set(d.t, d.v*p.mul*(p.inv?1/r:r)); });
-      return o; }catch(e){ return null; } }));
-  const ok = series.filter(Boolean); if(!ok.length) throw new Error('FRED 연결 실패');
-  // 모든 국가 값이 있는 달만 합산
-  const months=[...ok[0].keys()].filter(k=>ok.every(s=>s.has(k))).sort();
-  const rows=months.map(k=>({t:k+'-01', v:ok.reduce((a,s)=>a+s.get(k),0)/1e12}));
-  const out={rows, n:ok.length}; store.set(ck,out); return out;
+  if(!DATA) await loadData();
+  if(DATA && DATA.m2 && DATA.m2.rows.length) return { rows:DATA.m2.rows.map(a=>({t:a[0],v:a[1]})), n:DATA.m2.n, countries:DATA.m2.countries||[] };
+  throw new Error('M2 데이터 준비 중');
 }
 
 /* ── 지표 ── */
@@ -167,7 +153,7 @@ async function chartB(){
   if(M2 && M2.rows.length){
     const off=+$('#m2off').value, mx=M2.rows.map(d=>new Date(new Date(d.t).getTime()+off*86400000)), last=M2.rows[M2.rows.length-1], prev=M2.rows[M2.rows.length-2];
     tr.push(line(mx, M2.rows.map(d=>d.v), '#2e9d4a', 'Global M2', {yaxis:'y2', line:{color:'#2e9d4a',width:2.5}}));
-    m2txt = `Global M2 <b>$${last.v.toFixed(1)}조</b> ${pct(last.v,prev.v)} (${last.t.slice(0,7)} 전월비${M2.n<4?`, ${M2.n}개국`:''})`;
+    m2txt = `Global M2 <b>$${last.v.toFixed(1)}조</b> ${pct(last.v,prev.v)} (${last.t.slice(0,7)} 전월비${M2.countries.length?`, ${M2.countries.join('+')}`:''})`;
   } else if(M2===false) m2txt = '<span class="err">Global M2 불러오기 실패</span>';
   $('#sum-b').innerHTML = `${m2sym} <b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 주) · ${m2txt}`;
   Plotly.react('plot-b', tr, L, cfg);

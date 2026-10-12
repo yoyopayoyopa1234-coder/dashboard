@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
 
 LOG = []
-def get(url, tries=2, uas=(UA, {"User-Agent": "curl/8.5.0"}, {"User-Agent": "python-requests/2.32"})):
+def get(url, tries=2, uas=({"User-Agent": "curl/8.5.0"}, UA)):
     last = None
     for ua in uas:
         for i in range(tries):
@@ -34,30 +34,64 @@ def fred(sid):
     rows = list(csv.reader(io.StringIO(get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"))))[1:]
     return {d[:7]: float(v) for d, v in rows if v not in (".", "")}
 
+def ecb_m2():
+    txt = get("https://data-api.ecb.europa.eu/service/data/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E?format=csvdata&startPeriod=2010-01")
+    r = list(csv.DictReader(io.StringIO(txt)))
+    return {x["TIME_PERIOD"][:7]: float(x["OBS_VALUE"]) for x in r if x.get("OBS_VALUE")}
+
+def add_months(k, n):
+    y, m = int(k[:4]), int(k[5:7]) + n
+    y += (m - 1) // 12; m = (m - 1) % 12 + 1
+    return f"{y:04d}-{m:02d}"
+
 def global_m2():
-    parts = [("M2SL", 1e9, None, False), ("MYAGM2EZM196N", 1e6, "EXUSEU", False),
-             ("MYAGM2CNM189N", 1, "EXCHUS", True), ("MYAGM2JPM189N", 1, "EXJPUS", True)]
-    series = []
-    for sid, mul, fx, inv in parts:
-        try:
-            m = fred(sid)
-            f = fred(fx) if fx else None
-            s, last = {}, None
-            for k in sorted(m):
-                rate = 1
-                if f is not None:
-                    rate = f.get(k, last)
-                    if rate is None:
-                        continue
-                    last = rate
-                s[k] = m[k] * mul * (1 / rate if inv else rate)
-            series.append(s)
-        except Exception as e:
-            LOG.append(f"M2 skip {sid}: {e}")
+    # (이름, 후보 [(로더, 단위배수)], 환율 FRED id, 환율 나눗셈 여부)
+    countries = [
+        ("US", [(lambda: fred("M2SL"), 1e9)], None, False),
+        ("EU", [(ecb_m2, 1e6), (lambda: fred("MABMM301EZM189S"), 1)], "EXUSEU", False),
+        ("CN", [(lambda: fred("MABMM301CNM189S"), 1), (lambda: fred("MYAGM2CNM189N"), 1)], "EXCHUS", True),
+        ("JP", [(lambda: fred("MABMM301JPM189S"), 1), (lambda: fred("MYAGM2JPM189N"), 1)], "EXJPUS", True),
+    ]
+    now = datetime.now(timezone.utc).strftime("%Y-%m")
+    series, used = [], []
+    for name, cands, fx, inv in countries:
+        for loader, mul in cands:
+            try:
+                m = loader()
+                last = max(m)
+                LOG.append(f"M2 {name} last={last} n={len(m)}")
+                if last < add_months(now, -9):   # 9개월 넘게 발표 없으면 끊긴 시리즈로 보고 제외
+                    continue
+                f = fred(fx) if fx else None
+                s, lr = {}, None
+                for k in sorted(m):
+                    rate = 1
+                    if f is not None:
+                        rate = f.get(k, lr)
+                        if rate is None:
+                            continue
+                        lr = rate
+                    s[k] = m[k] * mul * (1 / rate if inv else rate)
+                series.append(s); used.append(name)
+                break
+            except Exception as e:
+                LOG.append(f"M2 {name} fail: {e}")
     if not series:
-        return {"rows": [], "n": 0}
-    months = sorted(k for k in series[0] if all(k in s for s in series))
-    return {"rows": [[k + "-01", round(sum(s[k] for s in series) / 1e12, 3)] for k in months], "n": len(series)}
+        return {"rows": [], "n": 0, "countries": []}
+    first = max(min(s) for s in series)
+    last = min(add_months(max(s), 2) for s in series)   # 발표 늦은 나라는 최대 2개월 직전값 유지
+    last = min(last, max(max(s) for s in series))
+    rows, k = [], first
+    prev = [None] * len(series)
+    while k <= last:
+        vals = []
+        for i, s in enumerate(series):
+            if k in s: prev[i] = s[k]
+            vals.append(prev[i])
+        if all(v is not None for v in vals):
+            rows.append([k + "-01", round(sum(vals) / 1e12, 3)])
+        k = add_months(k, 1)
+    return {"rows": rows, "n": len(series), "countries": used}
 
 data = {"updated": datetime.now(timezone.utc).isoformat(timespec="minutes"), "ohlc": {}}
 for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
@@ -69,7 +103,7 @@ for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
         print("FAIL", key, e)
 data["m2"] = global_m2()
 data["log"] = LOG[-20:]
-print("M2 rows", len(data["m2"]["rows"]), "countries", data["m2"]["n"])
+print("M2 rows", len(data["m2"]["rows"]), data["m2"]["countries"])
 if len(data["ohlc"]) < 4:
     raise SystemExit("일부 시세를 받지 못함 — 기존 data.json 유지")
 with open("data.json", "w") as f:
