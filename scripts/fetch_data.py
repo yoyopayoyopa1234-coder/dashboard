@@ -45,7 +45,41 @@ def fred(sid):
 def ecb_m2():
     txt = get("https://data-api.ecb.europa.eu/service/data/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E?format=csvdata&startPeriod=2010-01")
     r = list(csv.DictReader(io.StringIO(txt)))
-    return {x["TIME_PERIOD"][:7]: float(x["OBS_VALUE"]) for x in r if x.get("OBS_VALUE")}
+    return {x["TIME_PERIOD"][:7]: float(x["OBS_VALUE"]) * 1e6 for x in r if x.get("OBS_VALUE")}
+
+def dbnomics(code):
+    j = json.loads(get(f"https://api.db.nomics.world/v22/series/{code}?observations=1&format=json"))
+    doc = j["series"]["docs"][0]
+    return {p[:7]: float(v) for p, v in zip(doc["period"], doc["value"]) if v not in (None, "NA") and isinstance(v, (int, float))}
+
+def boj(code):
+    j = json.loads(get(f"https://www.stat-search.boj.or.jp/api/v1/getDataCode?format=json&lang=en&db=MD02&code={code}&startDate=201001"))
+    out = {}
+    for res in j.get("RESULTSET", []):
+        vals = res.get("VALUES", {})
+        for d, v in zip(vals.get("SURVEY_DATES", []), vals.get("VALUES", [])):
+            if v not in (None, ""): out[f"{str(d)[:4]}-{str(d)[4:6]}"] = float(v)
+    return out
+
+def boe(code):
+    url = ("https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes"
+           f"&Datefrom=01/Jan/2010&Dateto=now&SeriesCodes={code}&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N")
+    rows = list(csv.reader(io.StringIO(get(url))))[1:]
+    out = {}
+    for r in rows:
+        if len(r) < 2 or not r[1].strip(): continue
+        d = datetime.strptime(r[0].strip(), "%d %b %Y")
+        out[d.strftime("%Y-%m")] = float(r[1])
+    return out
+
+# 나라별 M2(현지 통화) 정상 크기 범위 — 원자료 단위(백만·십억)를 자동 보정
+SCALE = {"US": (1e13, 1e14), "EU": (8e12, 4e13), "CN": (1e14, 1e15), "JP": (8e14, 4e15), "GB": (1e12, 1e13)}
+def normalize(m, name):
+    lo, hi = SCALE[name]; v = m[max(m)]
+    for mul in (1, 1e3, 1e4, 1e6, 1e8, 1e9, 1e12):
+        if lo <= v * mul <= hi:
+            return {k: x * mul for k, x in m.items()}
+    raise ValueError(f"{name} 단위 판별 실패 (마지막 값 {v})")
 
 def add_months(k, n):
     y, m = int(k[:4]), int(k[5:7]) + n
@@ -53,51 +87,50 @@ def add_months(k, n):
     return f"{y:04d}-{m:02d}"
 
 def global_m2():
-    # (이름, 후보 [(로더, 단위배수)], 환율 FRED id, 환율 나눗셈 여부)
+    # (이름, 후보 로더들, 환율 FRED id, 환율로 나눌지)
     countries = [
-        ("US", [(lambda: fred("M2SL"), 1e9)], None, False),
-        ("EU", [(ecb_m2, 1e6), (lambda: fred("MABMM301EZM189S"), 1)], "EXUSEU", False),
-        ("CN", [(lambda: fred("MABMM301CNM189S"), 1), (lambda: fred("MYAGM2CNM189N"), 1)], "EXCHUS", True),
-        ("JP", [(lambda: fred("MABMM301JPM189S"), 1), (lambda: fred("MYAGM2JPM189N"), 1)], "EXJPUS", True),
+        ("US", [lambda: fred("M2SL")], None, False),
+        ("EU", [ecb_m2, lambda: dbnomics("ECB/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E")], "EXUSEU", False),
+        ("CN", [lambda: dbnomics("IMF/IFS/M.CN.FMB_XDC"), lambda: dbnomics("IMF/IFS/M.CN.FM2_XDC"),
+                lambda: dbnomics("NBS/M_A0D01/A0D0101"), lambda: fred("MYAGM2CNM189N")], "EXCHUS", True),
+        ("JP", [lambda: boj("MAM1NAM2M2MO"), lambda: dbnomics("BOJ/MD02/MAM1NAM2M2MO"),
+                lambda: dbnomics("IMF/IFS/M.JP.FMB_XDC"), lambda: fred("MABMM301JPM189S")], "EXJPUS", True),
+        ("GB", [lambda: boe("LPMAUYN"), lambda: dbnomics("BOE/6/LPMAUYN"), lambda: dbnomics("IMF/IFS/M.GB.FMB_XDC")], "EXUSUK", False),
     ]
     now = datetime.now(timezone.utc).strftime("%Y-%m")
     series, used = [], []
     for name, cands, fx, inv in countries:
-        for loader, mul in cands:
+        for ci, loader in enumerate(cands):
             try:
-                m = loader()
+                m = normalize(loader(), name)
                 last = max(m)
-                LOG.append(f"M2 {name} last={last} n={len(m)}")
-                if last < add_months(now, -9):   # 9개월 넘게 발표 없으면 끊긴 시리즈로 보고 제외
+                LOG.append(f"M2 {name}#{ci} ok last={last} n={len(m)} v={m[last]:.3g}")
+                if last < add_months(now, -9):
                     continue
                 f = fred(fx) if fx else None
-                s, lr = {}, None
+                s_, lr = {}, None
                 for k in sorted(m):
                     rate = 1
                     if f is not None:
                         rate = f.get(k, lr)
-                        if rate is None:
-                            continue
+                        if rate is None: continue
                         lr = rate
-                    s[k] = m[k] * mul * (1 / rate if inv else rate)
-                series.append(s); used.append(name)
+                    s_[k] = m[k] * (1 / rate if inv else rate)
+                series.append(s_); used.append(name)
                 break
             except Exception as e:
-                LOG.append(f"M2 {name} fail: {e}")
+                LOG.append(f"M2 {name}#{ci} fail: {type(e).__name__}: {str(e)[:120]}")
     if not series:
         return {"rows": [], "n": 0, "countries": []}
-    first = max(min(s) for s in series)
-    last = min(add_months(max(s), 2) for s in series)   # 발표 늦은 나라는 최대 2개월 직전값 유지
-    last = min(last, max(max(s) for s in series))
-    rows, k = [], first
-    prev = [None] * len(series)
+    first = max(min(x) for x in series)
+    last = min(add_months(max(x), 3) for x in series)       # 발표 늦은 나라는 최대 3개월 직전값 유지
+    last = min(last, max(max(x) for x in series))
+    rows, k, prev = [], first, [None] * len(series)
     while k <= last:
-        vals = []
-        for i, s in enumerate(series):
-            if k in s: prev[i] = s[k]
-            vals.append(prev[i])
-        if all(v is not None for v in vals):
-            rows.append([k + "-01", round(sum(vals) / 1e12, 3)])
+        for i, x in enumerate(series):
+            if k in x: prev[i] = x[k]
+        if all(v is not None for v in prev):
+            rows.append([k + "-01", round(sum(prev) / 1e12, 3)])
         k = add_months(k, 1)
     return {"rows": rows, "n": len(series), "countries": used}
 
@@ -114,7 +147,7 @@ for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
     except Exception as e:
         print("FAIL", key, e)
 data["m2"] = global_m2()
-data["log"] = LOG[-20:]
+data["log"] = LOG[-40:]
 print("M2 rows", len(data["m2"]["rows"]), data["m2"]["countries"])
 if not all(k in data["ohlc"] for k in ("TQQQ_1mo", "MSTR_1wk", "MSTR_1mo", "NDX_1wk")):
     raise SystemExit("일부 시세를 받지 못함 — 기존 data.json 유지")

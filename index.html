@@ -127,7 +127,7 @@ function vixfix(rows, pd=22, bbl=20, mult=2, lb=50, ph=0.85){
 }
 
 /* ── 그리기 ── */
-const C = { grid:'#262c35', txt:'#c9cfd8', up:'#e5484d', dn:'#3b82f6' };
+const C = { grid:'#262c35', txt:'#c9cfd8', up:'#089981', dn:'#f23645' };  // TradingView 색: 상승 초록, 하락 빨강
 const base = h => ({ paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:C.txt,size:11}, height:h,
   margin:{l:8,r:56,t:10,b:28}, showlegend:false, hovermode:'x unified', dragmode:'pan', xaxis:{rangeslider:{visible:false}, gridcolor:C.grid} });
 const ax = o => ({ gridcolor:C.grid, zeroline:false, side:'right', tickfont:{size:10}, ...o });
@@ -164,12 +164,17 @@ async function chartD(){
 async function chartA(){
   const r = await ohlc('TQQQ','1mo'), x=r.map(d=>d.t), c=r.map(d=>d.c), b=bb(c), v=vixfix(r), i=r.length-1;
   const pb=(c[i]-b.lo[i])/(b.up[i]-b.lo[i]);
-  $('#sum-a').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 달) · BB 상단 ${fmt(b.up[i])} / 중심 ${fmt(b.mid[i])} / 하단 ${fmt(b.lo[i])} · %b ${pb.toFixed(2)} · Vix Fix ${v.w[i].toFixed(1)} ${v.sig[i]?'<span class="on">신호 ON</span>':'꺼짐'}`;
-  const L = base(620); L.yaxis=ax({domain:[0.38,1], type:'log'}); L.yaxis2=ax({domain:[0,0.33]});
-  Plotly.react('plot-a', [ candle(r),
-    line(x,b.up,'#e5484d','BB 상단',{line:{color:'#e5484d',width:1}}), line(x,b.mid,'#4f7cf7','BB 중심',{line:{color:'#4f7cf7',width:1}}),
-    line(x,b.lo,'#2bb58f','BB 하단',{line:{color:'#2bb58f',width:1}, fill:'tonexty', fillcolor:'rgba(79,124,247,0.07)'}),
-    ...vixTraces(x,v,'y2') ], L, cfg);
+  $('#sum-a').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 달) · BB 상단 ${fmt(b.up[i])} / 중심 ${fmt(b.mid[i])} / 하단 ${fmt(b.lo[i])} · %b ${pb.toFixed(2)} · Vix Fix ${v.w[i].toFixed(2)} / ${v.rh[i].toFixed(2)} ${v.sig[i]?'<span class="on">신호 ON</span>':'꺼짐'}`;
+  // TradingView 화면과 같게: 선형 축, 2018년부터, 밴드 상단~하단 채움
+  const start = x.findIndex(t=>t.getFullYear()>=2018), s = start<0?0:start;
+  const vis = [...r.slice(s).map(d=>d.h), ...b.up.slice(s).filter(v=>v!=null)], visLo = [...r.slice(s).map(d=>d.l), ...b.lo.slice(s).filter(v=>v!=null)];
+  const L = base(620); L.yaxis=ax({domain:[0.38,1], range:[Math.min(0,...visLo)*1.05, Math.max(...vis)*1.05]}); L.yaxis2=ax({domain:[0,0.33]});
+  L.xaxis.range=[x[s], new Date(x[i].getTime()+60*86400000)];
+  Plotly.react('plot-a', [
+    line(x,b.up,'#f23645','BB 상단',{line:{color:'#f23645',width:1.2}}),
+    line(x,b.lo,'#089981','BB 하단',{line:{color:'#089981',width:1.2}, fill:'tonexty', fillcolor:'rgba(33,150,243,0.08)'}),
+    line(x,b.mid,'#2962ff','BB 중심',{line:{color:'#2962ff',width:1.2}}),
+    candle(r), ...vixTraces(x,v,'y2') ], L, cfg);
 }
 
 let M2=null, m2sym='MSTR';
@@ -192,7 +197,7 @@ async function chartB(){
 async function chartC(){
   const r = await ohlc('MSTR','1mo'), x=r.map(d=>d.t), c=r.map(d=>d.c), rs=rsi(c), v=vixfix(r), i=r.length-1;
   $('#sum-c').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 달) · RSI ${rs[i].toFixed(1)}${rs[i]>=70?' 과매수':rs[i]<=30?' 과매도':''} · Vix Fix ${v.w[i].toFixed(1)} ${v.sig[i]?'<span class="on">신호 ON</span>':'꺼짐'}`;
-  const L = base(700); L.yaxis=ax({domain:[0.52,1], type:'log'}); L.yaxis2=ax({domain:[0.27,0.48], range:[0,100]}); L.yaxis3=ax({domain:[0,0.23]});
+  const L = base(700); L.yaxis=ax({domain:[0.52,1]}); L.yaxis2=ax({domain:[0.27,0.48], range:[0,100]}); L.yaxis3=ax({domain:[0,0.23]});
   const back=Math.max(0,r.length-60); L.xaxis.range=[x[back], new Date(x[i].getTime()+40*86400000)];
   L.shapes=[ {type:'rect',xref:'paper',x0:0,x1:1,yref:'y2',y0:30,y1:70,fillcolor:'rgba(120,110,230,0.10)',line:{width:0}},
     ...[30,50,70].map(y=>({type:'line',xref:'paper',x0:0,x1:1,yref:'y2',y0:y,y1:y,line:{color:'#5d6675',width:0.8,dash:'dot'}})) ];
