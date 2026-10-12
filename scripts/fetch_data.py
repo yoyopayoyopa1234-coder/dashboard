@@ -72,6 +72,30 @@ def boe(code):
         out[d.strftime("%Y-%m")] = float(r[1])
     return out
 
+
+def nbs_m2():
+    """중국 국가통계국 직접 조회 (2010년~), 단위 億元"""
+    import urllib.parse
+    dfw = json.dumps([{"wdcode": "zb", "valuecode": "A0D01"}, {"wdcode": "sj", "valuecode": "2010-"}], separators=(",", ":"))
+    url = ("https://data.stats.gov.cn/easyquery.htm?m=QueryData&dbcode=hgyd&rowcode=zb&colcode=sj&wds=%5B%5D&dfwds="
+           + urllib.parse.quote(dfw) + f"&k1={int(time.time()*1000)}")
+    j = json.loads(get(url))
+    out = {}
+    for n in j["returndata"]["datanodes"]:
+        code = n["code"]  # zb.A0D0101_sj.202608
+        if "A0D0101_" not in code or not n["data"]["hasdata"]: continue
+        ym = code.split("sj.")[1]; out[f"{ym[:4]}-{ym[4:6]}"] = float(n["data"]["data"])
+    return out
+
+def probe_dbnomics():
+    for q in ("IMF/IFS?q=china%20broad%20money", "IMF/IFS?q=china%20money%20supply%20M2", "IMF/MFS_MA?q=china"):
+        try:
+            j = json.loads(get(f"https://api.db.nomics.world/v22/series/{q}&observations=0&limit=8&format=json", tries=1))
+            docs = j.get("series", {}).get("docs", [])
+            LOG.append("probe " + q + " → " + " | ".join(f"{d.get('series_code')}:{d.get('series_name','')[:50]}" for d in docs))
+        except Exception as e:
+            LOG.append(f"probe {q} fail {e}")
+
 # 나라별 M2(현지 통화) 정상 크기 범위 — 원자료 단위(백만·십억)를 자동 보정
 SCALE = {"US": (1e13, 1e14), "EU": (8e12, 4e13), "CN": (1e14, 1e15), "JP": (8e14, 4e15), "GB": (1e12, 1e13)}
 def normalize(m, name):
@@ -91,12 +115,12 @@ def global_m2():
     countries = [
         ("US", [lambda: fred("M2SL")], None, False),
         ("EU", [ecb_m2, lambda: dbnomics("ECB/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E")], "EXUSEU", False),
-        ("CN", [lambda: dbnomics("IMF/IFS/M.CN.FMB_XDC"), lambda: dbnomics("IMF/IFS/M.CN.FM2_XDC"),
-                lambda: dbnomics("NBS/M_A0D01/A0D0101"), lambda: fred("MYAGM2CNM189N")], "EXCHUS", True),
+        ("CN", [nbs_m2, lambda: dbnomics("NBS/M_A0D01/A0D0101")], "EXCHUS", True),
         ("JP", [lambda: boj("MAM1NAM2M2MO"), lambda: dbnomics("BOJ/MD02/MAM1NAM2M2MO"),
                 lambda: dbnomics("IMF/IFS/M.JP.FMB_XDC"), lambda: fred("MABMM301JPM189S")], "EXJPUS", True),
         ("GB", [lambda: boe("LPMAUYN"), lambda: dbnomics("BOE/6/LPMAUYN"), lambda: dbnomics("IMF/IFS/M.GB.FMB_XDC")], "EXUSUK", False),
     ]
+    probe_dbnomics()
     now = datetime.now(timezone.utc).strftime("%Y-%m")
     series, used = [], []
     for name, cands, fx, inv in countries:
