@@ -1,60 +1,102 @@
 {
  "mstr_rsi_vix": {
-  "title": "Chart Not Found — TradingView",
+  "title": "MSTR 154.03 ▼ −0.2% 이름없음",
   "url": "https://kr.tradingview.com/chart/soC8M4NK/?symbol=NASDAQ%3AMSTR",
   "sources": [],
   "series": [],
-  "legendAny": [],
+  "legendAny": [
+   "M Strategy Inc Class A 1달 NASDAQ 시 153.82 고 170.17 저 147.37 종 154.05 +0.96 (+0.63%)",
+   "M Strategy Inc Class A 1달 NASDAQ 시 153.82 고 170.17 저 147.37 종 154.05 +0.96 (+0.63%)",
+   "RSI 14 close",
+   "CM_Williams_Vix_Fix 22 20 2 50 0.85 1.01",
+   "발표 평가",
+   "매출 순이익 순마진 %",
+   "2026 2025 2024"
+  ],
   "loginWall": false,
   "secs": 49
  },
  "ndx_rsi_vix": {
-  "title": "Chart Not Found — TradingView",
+  "title": "NDX 30,724.39 ▼ −0.51% 이름없음",
   "url": "https://kr.tradingview.com/chart/soC8M4NK/?symbol=NASDAQ%3ANDX",
   "sources": [],
   "series": [],
-  "legendAny": [],
+  "legendAny": [
+   "N 나스닥-100 인덱스 1달 NASDAQ 시 30,533.60 고 31,361.37 저 30,274.65 종 30,724.39 +315.89 (+1.04%)",
+   "N 나스닥-100 인덱스 1달 NASDAQ 시 30,533.60 고 31,361.37 저 30,274.65 종 30,724.39 +315.89 (+1.04%)",
+   "RSI 14 close",
+   "CM_Williams_Vix_Fix 22 20 2 50 0.85 1.01",
+   "2026 2025 2024"
+  ],
   "loginWall": false,
   "secs": 49
  },
  "mstr_bb_vix": {
-  "title": "Chart Not Found — TradingView",
+  "title": "MSTR 153.92 ▼ −0.27% 이름없음",
   "url": "https://kr.tradingview.com/chart/VDpQAf5w/?symbol=NASDAQ%3AMSTR",
   "sources": [],
   "series": [],
-  "legendAny": [],
+  "legendAny": [
+   "M Strategy Inc Class A 1달 NASDAQ 시 153.82 고 170.17 저 147.37 종 153.92 +0.83 (+0.54%) BB 20 SMA close 2",
+   "M Strategy Inc Class A 1달 NASDAQ 시 153.82 고 170.17 저 147.37 종 153.92 +0.83 (+0.54%)",
+   "CM_Williams_Vix_Fix 22 20 2 50 0.85 1.01",
+   "발표 평가",
+   "매출 순이익 순마진 %",
+   "2026 2025 2024"
+  ],
   "loginWall": false,
   "secs": 49
  },
  "tqqq_bb_vix": {
-  "title": "Chart Not Found — TradingView",
+  "title": "TQQQ 79.94 ▼ −1.65% 이름없음",
   "url": "https://kr.tradingview.com/chart/VDpQAf5w/?symbol=NASDAQ%3ATQQQ",
   "sources": [],
   "series": [],
-  "legendAny": [],
+  "legendAny": [
+   "T ProShares UltraPro QQQ 1달 NASDAQ 시 78.88 고 85.32 저 76.87 종 79.94 +1.91 (+2.45%) BB 20 SMA close 2",
+   "T ProShares UltraPro QQQ 1달 NASDAQ 시 78.88 고 85.32 저 76.87 종 79.94 +1.91 (+2.45%)",
+   "CM_Williams_Vix_Fix 22 20 2 50 0.85 1.01",
+   "2026 2025 2024",
+   "주식 33.31%",
+   "주식 33.31%",
+   "33.31%",
+   "채권, 현금 및 기타 66.69%",
+   "채권, 현금 및 기타 66.69%",
+   "66.69%"
+  ],
   "loginWall": false,
   "secs": 49
  },
  "mstr_m2": {
-  "title": "Chart Not Found — TradingView",
+  "title": "MSTR 154.01 ▼ −0.21% Unnamed",
   "url": "https://kr.tradingview.com/chart/fyJI5SCU/?symbol=NASDAQ%3AMSTR",
   "sources": [],
   "series": [],
-  "legendAny": [],
+  "legendAny": [
+   "M Strategy Inc Class A 1주 NASDAQ 시 153.40 고 158.40 저 152.58 종 154.01 −0.33 (−0.21%) Global M2 Money Supply // Days Offset = 0",
+   "M Strategy Inc Class A 1주 NASDAQ 시 153.40 고 158.40 저 152.58 종 154.01 −0.33 (−0.21%)",
+   "발표 평가",
+   "매출 순이익 순마진 %",
+   "2026 2025 2024"
+  ],
   "loginWall": false,
   "secs": 49
  },
  "ndx_m2": {
-  "title": "Chart Not Found — TradingView",
+  "title": "NDX 30,729.72 ▼ −0.5% Unnamed",
   "url": "https://kr.tradingview.com/chart/fyJI5SCU/?symbol=NASDAQ%3ANDX",
   "sources": [],
   "series": [],
-  "legendAny": [],
+  "legendAny": [
+   "N 나스닥-100 인덱스 1주 NASDAQ 시 30,796.04 고 30,813.96 저 30,633.80 종 30,729.72 −153.43 (−0.50%) Global M2 Money Supply // Days Offset = 0",
+   "N 나스닥-100 인덱스 1주 NASDAQ 시 30,796.04 고 30,813.96 저 30,633.80 종 30,729.72 −153.43 (−0.50%)",
+   "2026 2025 2024"
+  ],
   "loginWall": false,
   "secs": 49
  },
  "_meta": {
   "logged_in_cookie": false,
-  "at": "2026-10-12 16:17 UTC"
+  "at": "2026-10-12 16:36 UTC"
  }
 }
