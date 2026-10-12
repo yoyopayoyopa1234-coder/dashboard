@@ -126,52 +126,69 @@ def add_months(k, n):
     y += (m - 1) // 12; m = (m - 1) % 12 + 1
     return f"{y:04d}-{m:02d}"
 
+def months_between(a, b):
+    return (int(b[:4]) - int(a[:4])) * 12 + int(b[5:7]) - int(a[5:7])
+
+def fill_extend(m, end, notes, name):
+    """현지통화 월별 시리즈: 중간 빈 달은 기하 보간, end까지는 최근 12개월 증가율로 연장"""
+    ks = sorted(m); out = dict(m); gaps = []
+    for k1, k2 in zip(ks, ks[1:]):
+        n = months_between(k1, k2)
+        if n > 1:
+            g = (m[k2] / m[k1]) ** (1 / n)
+            for j in range(1, n): out[add_months(k1, j)] = m[k1] * g ** j
+            if n > 3: gaps.append(f"{add_months(k1, 1)}~{add_months(k2, -1)}")
+    last = ks[-1]
+    if last < end:
+        prev12 = add_months(last, -12)
+        g = (out[last] / out[prev12]) ** (1 / 12) if prev12 in out else 1.0
+        for j in range(1, months_between(last, end) + 1): out[add_months(last, j)] = out[last] * g ** j
+        notes.append(f"{name} {add_months(last, 1)}~{end} 추정(최근 1년 증가율)")
+    for gp in gaps: notes.append(f"{name} {gp} 보간")
+    return out
+
 def global_m2():
-    # (이름, 후보 로더들, 환율 FRED id, 환율로 나눌지)
     countries = [
         ("US", [lambda: fred("M2SL")], None, False),
         ("EU", [ecb_m2, lambda: dbnomics("ECB/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E")], "EXUSEU", False),
         ("CN", [cn_merged], "EXCHUS", True),
-        ("JP", [lambda: boj("MAM1NAM2M2MO"), lambda: dbnomics("BOJ/MD02/MAM1NAM2M2MO"),
-                lambda: dbnomics("IMF/IFS/M.JP.FMB_XDC"), lambda: fred("MABMM301JPM189S")], "EXJPUS", True),
-        ("GB", [lambda: boe("LPMAUYN"), lambda: dbnomics("BOE/6/LPMAUYN"), lambda: dbnomics("IMF/IFS/M.GB.FMB_XDC")], "EXUSUK", False),
+        ("JP", [lambda: boj("MAM1NAM2M2MO"), lambda: dbnomics("BOJ/MD02/MAM1NAM2M2MO"), lambda: fred("MABMM301JPM189S")], "EXJPUS", True),
+        ("GB", [lambda: boe("LPMAUYN"), lambda: dbnomics("BOE/6/LPMAUYN")], "EXUSUK", False),
     ]
     now = datetime.now(timezone.utc).strftime("%Y-%m")
-    series, used = [], []
+    local = []
     for name, cands, fx, inv in countries:
         for ci, loader in enumerate(cands):
             try:
-                m = normalize(loader(), name)
-                last = max(m)
-                LOG.append(f"M2 {name}#{ci} ok last={last} n={len(m)} v={m[last]:.3g}")
-                if last < add_months(now, -9):
-                    continue
-                f = fred(fx) if fx else None
-                s_, lr = {}, None
-                for k in sorted(m):
-                    rate = 1
-                    if f is not None:
-                        rate = f.get(k, lr)
-                        if rate is None: continue
-                        lr = rate
-                    s_[k] = m[k] * (1 / rate if inv else rate)
-                series.append(s_); used.append(name)
-                break
+                m = normalize(loader(), name); last = max(m)
+                LOG.append(f"M2 {name}#{ci} ok {min(m)}~{last} n={len(m)}")
+                if last < add_months(now, -12): continue
+                local.append((name, m, fx, inv)); break
             except Exception as e:
                 LOG.append(f"M2 {name}#{ci} fail: {type(e).__name__}: {str(e)[:120]}")
-    if not series:
-        return {"rows": [], "n": 0, "countries": []}
-    first = max(min(x) for x in series)
-    last = min(add_months(max(x), 3) for x in series)       # 발표 늦은 나라는 최대 3개월 직전값 유지
-    last = min(last, max(max(x) for x in series))
-    rows, k, prev = [], first, [None] * len(series)
-    while k <= last:
-        for i, x in enumerate(series):
-            if k in x: prev[i] = x[k]
-        if all(v is not None for v in prev):
-            rows.append([k + "-01", round(sum(prev) / 1e12, 3)])
+    if not local:
+        return {"rows": [], "n": 0, "countries": [], "notes": []}
+    end = max(max(m) for n_, m, _, _ in local if n_ in ("US", "EU")) if any(n_ in ("US", "EU") for n_, *_ in local) else max(max(m) for _, m, _, _ in local)
+    start = max(max("2010-01", min(m)) for _, m, _, _ in local)
+    notes, usd = [], []
+    for name, m, fx, inv in local:
+        m = fill_extend({k: v for k, v in m.items() if k <= end}, end, notes, name)
+        f = fred(fx) if fx else None
+        s_, lr = {}, None
+        for k in sorted(m):
+            rate = 1
+            if f is not None:
+                rate = f.get(k, lr)
+                if rate is None: continue
+                lr = rate
+            s_[k] = m[k] * (1 / rate if inv else rate)
+        usd.append(s_)
+    rows, k = [], start
+    while k <= end:
+        if all(k in x for x in usd):
+            rows.append([k + "-01", round(sum(x[k] for x in usd) / 1e12, 3)])
         k = add_months(k, 1)
-    return {"rows": rows, "n": len(series), "countries": used}
+    return {"rows": rows, "n": len(usd), "countries": [n_ for n_, *_ in local], "notes": notes}
 
 data = {"updated": datetime.now(timezone.utc).isoformat(timespec="minutes"), "ohlc": {}}
 for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),

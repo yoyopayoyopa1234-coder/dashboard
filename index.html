@@ -108,7 +108,7 @@ async function fred(id){
 }
 async function globalM2(){
   if(!DATA) await loadData();
-  if(DATA && DATA.m2 && DATA.m2.rows.length) return { rows:DATA.m2.rows.map(a=>({t:a[0],v:a[1]})), n:DATA.m2.n, countries:DATA.m2.countries||[] };
+  if(DATA && DATA.m2 && DATA.m2.rows.length) return { rows:DATA.m2.rows.map(a=>({t:a[0],v:a[1]})), n:DATA.m2.n, countries:DATA.m2.countries||[], notes:DATA.m2.notes||[] };
   throw new Error('M2 데이터 준비 중');
 }
 
@@ -188,7 +188,7 @@ async function chartB(){
   if(M2 && M2.rows.length){
     const off=+$('#m2off').value, mx=M2.rows.map(d=>new Date(new Date(d.t).getTime()+off*86400000)), last=M2.rows[M2.rows.length-1], prev=M2.rows[M2.rows.length-2];
     tr.push(line(mx, M2.rows.map(d=>d.v), '#2e9d4a', 'Global M2', {yaxis:'y2', line:{color:'#2e9d4a',width:2.5}}));
-    m2txt = `Global M2 <b>$${last.v.toFixed(1)}조</b> ${pct(last.v,prev.v)} (${last.t.slice(0,7)} 전월비${M2.countries.length?`, ${M2.countries.join('+')}`:''})`;
+    m2txt = `Global M2 <b>$${last.v.toFixed(1)}조</b> ${pct(last.v,prev.v)} (${last.t.slice(0,7)} 전월비${M2.countries.length?`, ${M2.countries.join('+')}`:''})` + (M2.notes.length?`<br><span style="color:var(--muted);font-size:11px">추정·보간: ${M2.notes.join(' · ')}</span>`:'');
   } else if(M2===false) m2txt = '<span class="err">Global M2 불러오기 실패</span>';
   $('#sum-b').innerHTML = `${m2sym} <b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 주) · ${m2txt}`;
   Plotly.react('plot-b', tr, L, cfg);
