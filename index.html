@@ -3,123 +3,84 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MSTR · TQQQ 데일리</title>
+<title>MSTR 데일리</title>
 <style>
   :root { --bg:#0f1216; --panel:#171b21; --line:#262c35; --fg:#e6e9ee; --muted:#8a93a3; --accent:#f0b429; color-scheme:dark; }
   * { box-sizing:border-box; }
   html,body { margin:0; background:var(--bg); color:var(--fg); font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif; }
   .wrap { padding:12px 12px 40px; max-width:1100px; margin:0 auto; }
-  header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  header { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin-bottom:10px; }
   h1 { font-size:18px; margin:0; }
   .date { color:var(--muted); font-size:12px; }
-  .btn { font:inherit; font-size:12px; padding:5px 10px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--fg); cursor:pointer; }
-  .btn[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); }
-  header .btn { margin-left:auto; }
+  .btn { font:inherit; font-size:12px; padding:5px 10px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--fg); cursor:pointer; text-decoration:none; }
+  .right { margin-left:auto; display:flex; gap:6px; }
   .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px; margin-bottom:14px; overflow:hidden; }
   .panel h2 { margin:0; padding:9px 12px; font-size:14px; display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; border-bottom:1px solid var(--line); }
-  .panel h2 .sym { color:var(--accent); }
   .panel h2 .desc { color:var(--muted); font-weight:400; font-size:12px; }
   .panel h2 .tools { margin-left:auto; display:flex; gap:4px; align-items:center; font-weight:400; font-size:12px; color:var(--muted); }
   .sum { padding:8px 12px; font-size:13px; font-variant-numeric:tabular-nums; border-bottom:1px solid var(--line); line-height:1.6; }
   .sum b { font-weight:600; }
-  .up { color:#e5484d; } .dn { color:#3b82f6; } .on { color:#5ad445; font-weight:600; }
+  .up { color:#089981; } .dn { color:#f23645; } .on { color:#5ad445; font-weight:600; } .hot { color:#f23645; font-weight:600; }
   .plot { width:100%; }
-  .status { font-size:12px; color:var(--muted); padding:6px 12px; }
-  .err { color:#e5484d; }
+  .status { font-size:12px; color:var(--muted); padding:6px 2px; line-height:1.6; }
+  .err { color:#f23645; }
+  .note { color:var(--muted); font-size:11px; }
   input[type=range] { width:90px; vertical-align:middle; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>MSTR · TQQQ 데일리</h1>
+    <h1>MSTR 데일리</h1>
     <span class="date" id="today"></span>
-    <a class="btn" href="report.html" style="text-decoration:none;margin-left:auto">오늘 분석</a>
-    <button class="btn" id="refresh" type="button" style="margin-left:0">새로고침</button>
+    <span class="right">
+      <a class="btn" href="report.html">오늘 분석</a>
+      <button class="btn" id="refresh" type="button">새로고침</button>
+    </span>
   </header>
 
   <div class="panel">
-    <h2><span class="sym" id="dsym">MSTR</span><span class="desc">일봉 · 5/218선 · +7% 엔벨로프 · 이격도(200)</span>
-      <span class="tools">
-        <button class="btn" data-d="MSTR" aria-pressed="true" type="button">MSTR</button>
-        <button class="btn" data-d="TQQQ" aria-pressed="false" type="button">TQQQ</button>
-      </span></h2>
+    <h2>일봉<span class="desc">5/218선 · 218일선 +7% 엔벨로프 · 이격도(200) 160/50</span></h2>
     <div class="sum" id="sum-d">불러오는 중…</div>
     <div class="plot" id="plot-d" style="height:620px"></div>
   </div>
 
   <div class="panel">
-    <h2><span class="sym">TQQQ</span><span class="desc">월봉 · BB 20/2 · Williams Vix Fix</span></h2>
-    <div class="sum" id="sum-a">불러오는 중…</div>
-    <div class="plot" id="plot-a" style="height:620px"></div>
-  </div>
-
-  <div class="panel">
-    <h2><span class="sym" id="m2sym">MSTR</span><span class="desc">주봉 · Global M2</span>
-      <span class="tools">
-        <button class="btn" data-m2="MSTR" aria-pressed="true" type="button">MSTR</button>
-        <button class="btn" data-m2="NDX" aria-pressed="false" type="button">NDX</button>
-        오프셋 <input type="range" id="m2off" min="0" max="120" value="0"> <span id="m2offv">0</span>일
-      </span></h2>
+    <h2>주봉 · Global M2
+      <span class="tools">오프셋 <input type="range" id="m2off" min="0" max="120" value="0"> <span id="m2offv">0</span>일</span></h2>
     <div class="sum" id="sum-b">불러오는 중…</div>
     <div class="plot" id="plot-b" style="height:480px"></div>
   </div>
 
   <div class="panel">
-    <h2><span class="sym">MSTR</span><span class="desc">월봉 · RSI 14 · Williams Vix Fix</span></h2>
+    <h2>월봉<span class="desc">BB 20/2 · RSI 14 · Williams Vix Fix 22/20/2/50/0.85</span></h2>
     <div class="sum" id="sum-c">불러오는 중…</div>
-    <div class="plot" id="plot-c" style="height:700px"></div>
+    <div class="plot" id="plot-c" style="height:820px"></div>
   </div>
 
-  <div class="status">데이터: Yahoo Finance · FRED (Global M2 = 주요국 M2 합계, 달러 환산 · 서버에서 3시간마다 갱신). 하루 1회 캐시, 새로고침 버튼으로 강제 갱신.</div>
+  <div class="status">데이터: Yahoo Finance(시세·환율), FRED·ECB·일본은행·영란은행·중국 국가통계국(M2). GitHub 서버가 3시간마다 갱신합니다.</div>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
-const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
-const todayKey = new Date().toISOString().slice(0,10);
 $('#today').textContent = new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
 
-/* ── 데이터 ── */
-const PROXIES = [
-  u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
-  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-  u => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u),
-];
-async function pfetch(u){ let last; for(const p of PROXIES){ try{ const r=await fetch(p(u)); if(r.ok) return r; last=new Error('HTTP '+r.status); }catch(e){ last=e; } } throw last||new Error('데이터 서버 연결 실패'); }
-
+/* ── 데이터 (서버가 미리 받아둔 data.json) ── */
 let DATA=null;
 async function loadData(){ try{ const r=await fetch('data.json?'+Math.floor(Date.now()/600000)); if(r.ok) DATA=await r.json(); }catch(e){} }
-const KEY = { 'TQQQ:1mo':'TQQQ_1mo', 'MSTR:1wk':'MSTR_1wk', 'MSTR:1mo':'MSTR_1mo', '^NDX:1wk':'NDX_1wk', 'MSTR:1d':'MSTR_1d', 'TQQQ:1d':'TQQQ_1d' };
-async function ohlc(sym, iv){
-  const k = DATA && DATA.ohlc && DATA.ohlc[KEY[sym+':'+iv]];
-  if(k && k.length) return k.map(a=>({t:new Date(a[0]*1000),o:a[1],h:a[2],l:a[3],c:a[4]}));
-  const ck=`o:${sym}:${iv}:${todayKey}`, c=store.get(ck); if(c) return c.map(d=>({...d,t:new Date(d.t)}));
-  const r = await pfetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=max&interval=${iv}`);
-  const res = (await r.json()).chart.result[0], q = res.indicators.quote[0], out=[];
-  res.timestamp.forEach((t,i)=>{ if(q.close[i]!=null) out.push({t:new Date(t*1000),o:q.open[i],h:q.high[i],l:q.low[i],c:q.close[i]}); });
-  if(out.length<10) throw new Error(sym+' 데이터 부족');
-  store.set(ck,out); return out;
-}
-async function fred(id){
-  const txt = await (await pfetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}`)).text(), out=[];
-  txt.trim().split('\n').slice(1).forEach(l=>{ const [d,v]=l.split(','); if(v && v.trim()!=='.') out.push({t:d.slice(0,7), v:+v}); });
-  if(!out.length) throw new Error(id); return out;
-}
-async function globalM2(){
-  if(!DATA) await loadData();
-  if(DATA && DATA.m2 && DATA.m2.rows.length) return { rows:DATA.m2.rows.map(a=>({t:a[0],v:a[1]})), n:DATA.m2.n, countries:DATA.m2.countries||[], notes:DATA.m2.notes||[] };
-  throw new Error('M2 데이터 준비 중');
+function ohlc(key){
+  const k = DATA && DATA.ohlc && DATA.ohlc[key];
+  if(!k || !k.length) throw new Error('데이터 준비 중');
+  return k.map(a=>({t:new Date(a[0]*1000),o:a[1],h:a[2],l:a[3],c:a[4]}));
 }
 
-/* ── 지표 ── */
+/* ── 지표 (TradingView 공식) ── */
 const sma=(a,n)=>a.map((_,i)=> i<n-1?null: a.slice(i-n+1,i+1).reduce((x,y)=>x+y,0)/n);
 const sd=(a,n)=>a.map((_,i)=>{ if(i<n-1) return null; const s=a.slice(i-n+1,i+1), m=s.reduce((x,y)=>x+y,0)/n; return Math.sqrt(s.reduce((x,y)=>x+(y-m)**2,0)/n); });
 const hi=(a,n)=>a.map((_,i)=> Math.max(...a.slice(Math.max(0,i-n+1),i+1)));
 function bb(c,n=20,k=2){ const m=sma(c,n), s=sd(c,n); return {mid:m, up:m.map((v,i)=>v==null?null:v+k*s[i]), lo:m.map((v,i)=>v==null?null:v-k*s[i])}; }
 function rsi(c,n=14){ const o=[null]; let g=0,l=0; for(let i=1;i<c.length;i++){ const d=c[i]-c[i-1], u=Math.max(d,0), w=Math.max(-d,0);
   if(i<=n){ g+=u; l+=w; if(i<n){o.push(null);continue;} g/=n; l/=n; } else { g=(g*(n-1)+u)/n; l=(l*(n-1)+w)/n; } o.push(l===0?100:100-100/(1+g/l)); } return o; }
-/* CM_Williams_Vix_Fix 22 20 2 50 0.85 1.01 */
 function vixfix(rows, pd=22, bbl=20, mult=2, lb=50, ph=0.85){
   const c=rows.map(r=>r.c), hc=hi(c,pd), w=rows.map((r,i)=>(hc[i]-r.l)/hc[i]*100);
   const m=sma(w,bbl), s=sd(w,bbl), up=m.map((v,i)=>v==null?null:v+mult*s[i]), rh=hi(w,lb).map(v=>v*ph);
@@ -127,32 +88,27 @@ function vixfix(rows, pd=22, bbl=20, mult=2, lb=50, ph=0.85){
 }
 
 /* ── 그리기 ── */
-const C = { grid:'#262c35', txt:'#c9cfd8', up:'#089981', dn:'#f23645' };  // TradingView 색: 상승 초록, 하락 빨강
+const C = { grid:'#262c35', txt:'#c9cfd8', up:'#089981', dn:'#f23645' };
 const base = h => ({ paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:C.txt,size:11}, height:h,
   margin:{l:8,r:56,t:10,b:28}, showlegend:false, hovermode:'x unified', dragmode:'pan', xaxis:{rangeslider:{visible:false}, gridcolor:C.grid} });
 const ax = o => ({ gridcolor:C.grid, zeroline:false, side:'right', tickfont:{size:10}, ...o });
 const candle = r => ({ type:'candlestick', x:r.map(d=>d.t), open:r.map(d=>d.o), high:r.map(d=>d.h), low:r.map(d=>d.l), close:r.map(d=>d.c),
-  increasing:{line:{color:C.up},fillcolor:C.up}, decreasing:{line:{color:C.dn},fillcolor:C.dn}, name:'가격' });
+  increasing:{line:{color:C.up},fillcolor:C.up}, decreasing:{line:{color:C.dn},fillcolor:C.dn}, name:'MSTR' });
 const line = (x,y,color,name,extra={}) => ({ x, y, name, mode:'lines', line:{color,width:1.4}, ...extra });
-const vixTraces = (x,v,yaxis) => [
-  { type:'bar', x, y:v.w, name:'Vix Fix', marker:{color:v.sig.map(b=>b?'#5ad445':'#e05a5a')}, yaxis },
-  line(x, v.rh, '#f0a030', 'RangeHigh', { yaxis, line:{color:'#f0a030',width:2.5} }),
-];
+const hline = (y,yref,color,dash='dot') => ({type:'line',xref:'paper',x0:0,x1:1,yref,y0:y,y1:y,line:{color,width:1,dash}});
 const cfg = { responsive:true, displaylogo:false, scrollZoom:true, modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d'] };
 const pct = (a,b) => { const p=(a/b-1)*100; return `<span class="${p>=0?'up':'dn'}">${p>=0?'+':''}${p.toFixed(2)}%</span>`; };
 const fmt = v => v.toLocaleString('en-US',{maximumFractionDigits:2});
 
-let dsym='MSTR';
-async function chartD(){
-  const r = await ohlc(dsym,'1d'), x=r.map(d=>d.t), c=r.map(d=>d.c), i=r.length-1;
+function chartD(){
+  const r = ohlc('MSTR_1d'), x=r.map(d=>d.t), c=r.map(d=>d.c), i=r.length-1;
   const ma5=sma(c,5), ma218=sma(c,218), env=ma218.map(v=>v==null?null:v*1.07), ma200=sma(c,200), disp=c.map((v,k)=>ma200[k]==null?null:v/ma200[k]*100);
-  const st = disp[i]>=160?'<span class="up">과열(160 이상)</span>':disp[i]<=50?'<span class="on">과매도(50 이하)</span>':'';
-  $('#sum-d').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (전일 대비) · 5일선 ${fmt(ma5[i])} · 218일선 ${fmt(ma218[i])} (${c[i]>ma218[i]?'위':'아래'}) · 엔벨로프 상단 ${fmt(env[i])} (${c[i]>env[i]?'돌파':'아래'}) · 이격도 <b>${disp[i].toFixed(1)}</b> ${st}`;
-  const L = base(620); L.yaxis=ax({domain:[0.36,1], type:'log'}); L.yaxis2=ax({domain:[0,0.30]});
-  const back=Math.max(0,r.length-420); L.xaxis.range=[x[back], new Date(x[i].getTime()+10*86400000)]; L.xaxis.rangebreaks=[{bounds:['sat','mon']}];
-  L.shapes=[160,100,50].map(y=>({type:'line',xref:'paper',x0:0,x1:1,yref:'y2',y0:y,y1:y,line:{color:y===100?'#5d6675':(y===160?'#e5484d':'#3b82f6'),width:1,dash:y===100?'dot':'dash'}}));
-  L.annotations=[{xref:'paper',x:0,yref:'y2',y:160,text:'160',showarrow:false,xanchor:'left',yanchor:'bottom',font:{size:10,color:'#e5484d'}},
-                 {xref:'paper',x:0,yref:'y2',y:50,text:'50',showarrow:false,xanchor:'left',yanchor:'bottom',font:{size:10,color:'#3b82f6'}}];
+  const st = disp[i]>=160?' <span class="hot">과열</span>':disp[i]<=50?' <span class="on">과매도</span>':'';
+  $('#sum-d').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} · 5일선 ${fmt(ma5[i])} · 218일선 ${fmt(ma218[i])} (${c[i]>ma218[i]?'위':'아래'}) · 엔벨로프 ${fmt(env[i])} (${c[i]>env[i]?'돌파':'아래'}) · 이격도 <b>${disp[i].toFixed(1)}</b>${st}`;
+  const L = base(620); L.yaxis=ax({domain:[0.36,1]}); L.yaxis2=ax({domain:[0,0.30]});
+  const back=Math.max(0,r.length-600); L.xaxis.range=[x[back], new Date(x[i].getTime()+10*86400000)]; L.xaxis.rangebreaks=[{bounds:['sat','mon']}];
+  L.shapes=[hline(160,'y2','#f23645','dash'), hline(100,'y2','#5d6675'), hline(50,'y2','#2962ff','dash')];
+  L.annotations=[[160,'#f23645'],[50,'#2962ff']].map(([y,col])=>({xref:'paper',x:0,yref:'y2',y,text:String(y),showarrow:false,xanchor:'left',yanchor:'bottom',font:{size:10,color:col}}));
   const vis=disp.slice(back).filter(v=>v!=null); L.yaxis2.range=[Math.min(40,...vis)-5, Math.max(170,...vis)+5];
   Plotly.react('plot-d', [ candle(r),
     line(x,ma5,'#8fe388','5일선',{line:{color:'#8fe388',width:2}}),
@@ -161,50 +117,48 @@ async function chartD(){
     line(x,disp,'#2bb58f','이격도(200)',{yaxis:'y2', line:{color:'#2bb58f',width:1.4}}) ], L, cfg);
 }
 
-async function chartA(){
-  const r = await ohlc('TQQQ','1mo'), x=r.map(d=>d.t), c=r.map(d=>d.c), b=bb(c), v=vixfix(r), i=r.length-1;
-  const pb=(c[i]-b.lo[i])/(b.up[i]-b.lo[i]);
-  $('#sum-a').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 달) · BB 상단 ${fmt(b.up[i])} / 중심 ${fmt(b.mid[i])} / 하단 ${fmt(b.lo[i])} · %b ${pb.toFixed(2)} · Vix Fix ${v.w[i].toFixed(2)} / ${v.rh[i].toFixed(2)} ${v.sig[i]?'<span class="on">신호 ON</span>':'꺼짐'}`;
-  // TradingView 화면과 같게: 선형 축, 2018년부터, 밴드 상단~하단 채움
-  const start = x.findIndex(t=>t.getFullYear()>=2018), s = start<0?0:start;
-  const vis = [...r.slice(s).map(d=>d.h), ...b.up.slice(s).filter(v=>v!=null)], visLo = [...r.slice(s).map(d=>d.l), ...b.lo.slice(s).filter(v=>v!=null)];
-  const L = base(620); L.yaxis=ax({domain:[0.38,1], range:[Math.min(0,...visLo)*1.05, Math.max(...vis)*1.05]}); L.yaxis2=ax({domain:[0,0.33]});
-  L.xaxis.range=[x[s], new Date(x[i].getTime()+60*86400000)];
-  Plotly.react('plot-a', [
-    line(x,b.up,'#f23645','BB 상단',{line:{color:'#f23645',width:1.2}}),
-    line(x,b.lo,'#089981','BB 하단',{line:{color:'#089981',width:1.2}, fill:'tonexty', fillcolor:'rgba(33,150,243,0.08)'}),
-    line(x,b.mid,'#2962ff','BB 중심',{line:{color:'#2962ff',width:1.2}}),
-    candle(r), ...vixTraces(x,v,'y2') ], L, cfg);
-}
-
-let M2=null, m2sym='MSTR';
-async function chartB(){
-  const ysym = m2sym==='NDX' ? '^NDX' : 'MSTR';
-  const r = await ohlc(ysym,'1wk'), x=r.map(d=>d.t), c=r.map(d=>d.c), i=r.length-1;
-  const L = base(480); L.yaxis=ax({type: m2sym==='MSTR'?'log':'linear'}); L.yaxis2=ax({overlaying:'y', side:'left', showgrid:false, title:{text:'M2 $조',font:{size:10}}});
-  const back = Math.max(0, r.length-260); L.xaxis.range=[x[back], new Date(x[i].getTime()+20*86400000)];
+function chartB(){
+  const r = ohlc('MSTR_1wk'), x=r.map(d=>d.t), c=r.map(d=>d.c), i=r.length-1;
+  const L = base(480); L.yaxis=ax({}); L.yaxis2=ax({overlaying:'y', side:'left', showgrid:false, title:{text:'M2 $조',font:{size:10}}});
+  const back = Math.max(0, r.length-110); L.xaxis.range=[x[back], new Date(x[i].getTime()+30*86400000)];
   const tr=[candle(r)];
-  let m2txt = 'Global M2 불러오는 중…';
-  if(M2 && M2.rows.length){
-    const off=+$('#m2off').value, mx=M2.rows.map(d=>new Date(new Date(d.t).getTime()+off*86400000)), last=M2.rows[M2.rows.length-1], prev=M2.rows[M2.rows.length-2];
-    tr.push(line(mx, M2.rows.map(d=>d.v), '#2e9d4a', 'Global M2', {yaxis:'y2', line:{color:'#2e9d4a',width:2.5}}));
-    m2txt = `Global M2 <b>$${last.v.toFixed(1)}조</b> ${pct(last.v,prev.v)} (${last.t.slice(0,7)} 전월비${M2.countries.length?`, ${M2.countries.join('+')}`:''})` + (M2.notes.length?`<br><span style="color:var(--muted);font-size:11px">추정·보간: ${M2.notes.join(' · ')}</span>`:'');
-  } else if(M2===false) m2txt = '<span class="err">Global M2 불러오기 실패</span>';
-  $('#sum-b').innerHTML = `${m2sym} <b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 주) · ${m2txt}`;
+  const M2 = DATA && DATA.m2 && DATA.m2.rows && DATA.m2.rows.length ? DATA.m2 : null;
+  let m2txt = '<span class="err">Global M2 데이터 없음</span>';
+  if(M2){
+    const off=+$('#m2off').value, rows=M2.rows, mx=rows.map(a=>new Date(new Date(a[0]).getTime()+off*86400000)), n=rows.length-1;
+    const peakI = rows.reduce((b,a,k)=> a[1]>rows[b][1]?k:b, Math.max(0,n-260));
+    const ago = rows[Math.max(0,n-63)];
+    tr.push(line(mx, rows.map(a=>a[1]), '#2e9d4a', 'Global M2', {yaxis:'y2', line:{color:'#2e9d4a',width:2.5}}));
+    const vis = rows.slice(Math.max(0,n-600)).map(a=>a[1]); L.yaxis2.range=[Math.min(...vis)*0.98, Math.max(...vis)*1.02];
+    m2txt = `Global M2 <b>$${rows[n][1].toFixed(1)}조</b> (${rows[n][0]}) · 3개월 전 대비 ${pct(rows[n][1],ago[1])} · 최근 1년 고점 $${rows[peakI][1].toFixed(1)}조(${rows[peakI][0]}) 대비 ${pct(rows[n][1],rows[peakI][1])}`
+      + `<br><span class="note">${M2.countries.join('+')} · 각국 최신 발표값 × 일별 환율${M2.notes&&M2.notes.length?' · '+M2.notes.join(' · '):''}</span>`;
+  }
+  $('#sum-b').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 주) · ${m2txt}`;
   Plotly.react('plot-b', tr, L, cfg);
 }
 
-async function chartC(){
-  const r = await ohlc('MSTR','1mo'), x=r.map(d=>d.t), c=r.map(d=>d.c), rs=rsi(c), v=vixfix(r), i=r.length-1;
-  $('#sum-c').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 달) · RSI ${rs[i].toFixed(1)}${rs[i]>=70?' 과매수':rs[i]<=30?' 과매도':''} · Vix Fix ${v.w[i].toFixed(1)} ${v.sig[i]?'<span class="on">신호 ON</span>':'꺼짐'}`;
-  const L = base(700); L.yaxis=ax({domain:[0.52,1]}); L.yaxis2=ax({domain:[0.27,0.48], range:[0,100]}); L.yaxis3=ax({domain:[0,0.23]});
-  const back=Math.max(0,r.length-60); L.xaxis.range=[x[back], new Date(x[i].getTime()+40*86400000)];
+function chartC(){
+  const r = ohlc('MSTR_1mo'), x=r.map(d=>d.t), c=r.map(d=>d.c), b=bb(c), rs=rsi(c), v=vixfix(r), i=r.length-1;
+  const pb=(c[i]-b.lo[i])/(b.up[i]-b.lo[i]);
+  $('#sum-c').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (이번 달) · BB ${fmt(b.up[i])} / ${fmt(b.mid[i])} / ${fmt(b.lo[i])} (%b ${pb.toFixed(2)}) · RSI <b>${rs[i].toFixed(2)}</b>${rs[i]>=70?' 과매수':rs[i]<=30?' 과매도':''} · Vix Fix ${v.w[i].toFixed(2)} / ${v.rh[i].toFixed(2)} ${v.sig[i]?'<span class="on">신호 ON</span>':'꺼짐'}`;
+  const s = Math.max(0, x.findIndex(t=>t.getFullYear()>=2019));
+  const visH = [...r.slice(s).map(d=>d.h), ...b.up.slice(s).filter(v=>v!=null)], visL=[...r.slice(s).map(d=>d.l), ...b.lo.slice(s).filter(v=>v!=null)];
+  const L = base(820); L.yaxis=ax({domain:[0.48,1], range:[Math.min(0,...visL)*1.05, Math.max(...visH)*1.05]});
+  L.yaxis2=ax({domain:[0.25,0.44], range:[0,100]}); L.yaxis3=ax({domain:[0,0.21]});
+  L.xaxis.range=[x[s], new Date(x[i].getTime()+60*86400000)];
   L.shapes=[ {type:'rect',xref:'paper',x0:0,x1:1,yref:'y2',y0:30,y1:70,fillcolor:'rgba(120,110,230,0.10)',line:{width:0}},
-    ...[30,50,70].map(y=>({type:'line',xref:'paper',x0:0,x1:1,yref:'y2',y0:y,y1:y,line:{color:'#5d6675',width:0.8,dash:'dot'}})) ];
-  Plotly.react('plot-c', [ candle(r), line(x,rs,'#7c7cf0','RSI 14',{yaxis:'y2', line:{color:'#7c7cf0',width:1.8}}), ...vixTraces(x,v,'y3') ], L, cfg);
+    hline(30,'y2','#5d6675'), hline(50,'y2','#5d6675'), hline(70,'y2','#5d6675') ];
+  Plotly.react('plot-c', [
+    line(x,b.up,'#f23645','BB 상단',{line:{color:'#f23645',width:1.2}}),
+    line(x,b.lo,'#089981','BB 하단',{line:{color:'#089981',width:1.2}, fill:'tonexty', fillcolor:'rgba(33,150,243,0.08)'}),
+    line(x,b.mid,'#2962ff','BB 중심',{line:{color:'#2962ff',width:1.2}}),
+    candle(r),
+    line(x,rs,'#7c7cf0','RSI 14',{yaxis:'y2', line:{color:'#7c7cf0',width:1.8}}),
+    { type:'bar', x, y:v.w, name:'Vix Fix', marker:{color:v.sig.map(g=>g?'#5ad445':'#e05a5a')}, yaxis:'y3' },
+    line(x, v.rh, '#f0a030', 'RangeHigh', { yaxis:'y3', line:{color:'#f0a030',width:2.5} }) ], L, cfg);
 }
 
-function safe(fn, id){ return fn().catch(e=>{ $(id).innerHTML=`<span class="err">오류: ${e.message} — 새로고침을 눌러주세요.</span>`; }); }
+function safe(fn, id){ try{ fn(); }catch(e){ $(id).innerHTML=`<span class="err">오류: ${e.message} — 새로고침을 눌러주세요.</span>`; } }
 async function init(){
   if(!DATA) await loadData();
   if(DATA && DATA.updated){
@@ -212,20 +166,10 @@ async function init(){
     $('#today').innerHTML += ' · 데이터 ' + u.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) + ' 기준'
       + (hrs>26 ? ' <span class="err">(갱신이 멈춤 — 확인 필요)</span>' : '');
   }
-  safe(chartD,'#sum-d'); safe(chartA,'#sum-a'); safe(chartC,'#sum-c');
-  await safe(chartB,'#sum-b');
-  try{ M2 = await globalM2(); }catch(e){ M2 = false; }
-  safe(chartB,'#sum-b');
+  safe(chartD,'#sum-d'); safe(chartB,'#sum-b'); safe(chartC,'#sum-c');
 }
-
-document.querySelectorAll('[data-m2]').forEach(b=>b.addEventListener('click',()=>{
-  m2sym=b.dataset.m2; $('#m2sym').textContent=m2sym;
-  document.querySelectorAll('[data-m2]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); safe(chartB,'#sum-b'); }));
-document.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{
-  dsym=b.dataset.d; $('#dsym').textContent=dsym;
-  document.querySelectorAll('[data-d]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); safe(chartD,'#sum-d'); }));
 $('#m2off').addEventListener('input',e=>{ $('#m2offv').textContent=e.target.value; safe(chartB,'#sum-b'); });
-$('#refresh').addEventListener('click',()=>{ try{ Object.keys(localStorage).filter(k=>/^(o|m2):/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){} M2=null; DATA=null; $('#today').textContent=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'}); init(); });
+$('#refresh').addEventListener('click',()=>{ DATA=null; $('#today').textContent=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'}); init(); });
 
 const PLOTLY_SRC = [
   'https://cdn.jsdelivr.net/npm/plotly.js-finance-dist-min@2.35.2/plotly-finance.min.js',
@@ -237,7 +181,7 @@ const loadScript = src => new Promise((ok,no)=>{ const s=document.createElement(
 (async()=>{
   const dataP = loadData();
   for(const src of PLOTLY_SRC){ try{ await loadScript(src); if(window.Plotly) break; }catch(e){} }
-  if(!window.Plotly){ ['#sum-a','#sum-b','#sum-c','#sum-d'].forEach(id=>$(id).innerHTML='<span class="err">차트 라이브러리를 불러오지 못했습니다. 새로고침하세요.</span>'); return; }
+  if(!window.Plotly){ ['#sum-b','#sum-c','#sum-d'].forEach(id=>$(id).innerHTML='<span class="err">차트 라이브러리를 불러오지 못했습니다. 새로고침하세요.</span>'); return; }
   await dataP; init();
 })();
 </script>

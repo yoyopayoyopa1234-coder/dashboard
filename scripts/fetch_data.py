@@ -129,71 +129,66 @@ def add_months(k, n):
 def months_between(a, b):
     return (int(b[:4]) - int(a[:4])) * 12 + int(b[5:7]) - int(a[5:7])
 
-def fill_extend(m, end, notes, name):
-    """현지통화 월별 시리즈: 중간 빈 달은 기하 보간, end까지는 최근 12개월 증가율로 연장"""
-    ks = sorted(m); out = dict(m); gaps = []
+def fill_gaps(m, notes, name):
+    """중간 빈 달만 기하 보간 (미래 연장은 하지 않음 — TradingView처럼 최신 발표값을 유지)"""
+    ks = sorted(m); out = dict(m)
     for k1, k2 in zip(ks, ks[1:]):
         n = months_between(k1, k2)
         if n > 1:
             g = (m[k2] / m[k1]) ** (1 / n)
             for j in range(1, n): out[add_months(k1, j)] = m[k1] * g ** j
-            if n > 3: gaps.append(f"{add_months(k1, 1)}~{add_months(k2, -1)}")
-    last = ks[-1]
-    if last < end:
-        prev12 = add_months(last, -12)
-        g = (out[last] / out[prev12]) ** (1 / 12) if prev12 in out else 1.0
-        for j in range(1, months_between(last, end) + 1): out[add_months(last, j)] = out[last] * g ** j
-        notes.append(f"{name} {add_months(last, 1)}~{end} 추정(최근 1년 증가율)")
-    for gp in gaps: notes.append(f"{name} {gp} 보간")
+            if n > 3: notes.append(f"{name} {add_months(k1, 1)}~{add_months(k2, -1)} 보간")
     return out
 
 def global_m2():
+    """TradingView Global M2 방식: 각국 M2(현지통화, 최신 발표값 유지) × 일별 환율 → 달러 합계"""
     countries = [
-        ("US", [lambda: fred("M2SL")], None, False),
-        ("EU", [ecb_m2, lambda: dbnomics("ECB/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E")], "EXUSEU", False),
-        ("CN", [cn_merged], "EXCHUS", True),
-        ("JP", [lambda: boj("MAM1NAM2M2MO"), lambda: dbnomics("BOJ/MD02/MAM1NAM2M2MO"), lambda: fred("MABMM301JPM189S")], "EXJPUS", True),
-        ("GB", [lambda: boe("LPMAUYN"), lambda: dbnomics("BOE/6/LPMAUYN")], "EXUSUK", False),
+        ("US", [lambda: fred("M2SL")], None),
+        ("EU", [ecb_m2, lambda: dbnomics("ECB/BSI/M.U2.Y.V.M20.X.1.U2.2300.Z01.E")], ("EURUSD=X", False)),
+        ("CN", [cn_merged], ("CNY=X", True)),
+        ("JP", [lambda: boj("MAM1NAM2M2MO"), lambda: dbnomics("BOJ/MD02/MAM1NAM2M2MO")], ("JPY=X", True)),
+        ("GB", [lambda: boe("LPMAUYN"), lambda: dbnomics("BOE/6/LPMAUYN")], ("GBPUSD=X", False)),
     ]
     now = datetime.now(timezone.utc).strftime("%Y-%m")
-    local = []
-    for name, cands, fx, inv in countries:
+    notes, local = [], []
+    for name, cands, fx in countries:
         for ci, loader in enumerate(cands):
             try:
                 m = normalize(loader(), name); last = max(m)
                 LOG.append(f"M2 {name}#{ci} ok {min(m)}~{last} n={len(m)}")
                 if last < add_months(now, -12): continue
-                local.append((name, m, fx, inv)); break
+                if last < add_months(now, -3): notes.append(f"{name} {last} 이후 미발표(최신값 유지)")
+                local.append((name, fill_gaps(m, notes, name), fx)); break
             except Exception as e:
                 LOG.append(f"M2 {name}#{ci} fail: {type(e).__name__}: {str(e)[:120]}")
     if not local:
-        return {"rows": [], "n": 0, "countries": [], "notes": []}
-    end = max(max(m) for n_, m, _, _ in local if n_ in ("US", "EU")) if any(n_ in ("US", "EU") for n_, *_ in local) else max(max(m) for _, m, _, _ in local)
-    start = max(max("2010-01", min(m)) for _, m, _, _ in local)
-    notes, usd = [], []
-    for name, m, fx, inv in local:
-        m = fill_extend({k: v for k, v in m.items() if k <= end}, end, notes, name)
-        f = fred(fx) if fx else None
-        s_, lr = {}, None
-        for k in sorted(m):
-            rate = 1
-            if f is not None:
-                rate = f.get(k, lr)
-                if rate is None: continue
-                lr = rate
-            s_[k] = m[k] * (1 / rate if inv else rate)
-        usd.append(s_)
-    rows, k = [], start
-    while k <= end:
-        if all(k in x for x in usd):
-            rows.append([k + "-01", round(sum(x[k] for x in usd) / 1e12, 3)])
-        k = add_months(k, 1)
-    return {"rows": rows, "n": len(usd), "countries": [n_ for n_, *_ in local], "notes": notes}
+        return {"rows": [], "n": 0, "countries": [], "notes": notes}
+    # 일별 환율 (Yahoo)
+    fxd = {}
+    for name, m, fx in local:
+        if fx:
+            r = yahoo(fx[0], "1d")
+            fxd[name] = {datetime.fromtimestamp(x[0], timezone.utc).strftime("%Y-%m-%d"): x[4] for x in r}
+    days = sorted(set().union(*[set(v) for v in fxd.values()])) if fxd else []
+    days = [d for d in days if d >= "2016-01-01"]
+    rows, lastfx = [], {}
+    for d in days:
+        mk, tot, ok = d[:7], 0.0, True
+        for name, m, fx in local:
+            keys = [k for k in m if k <= mk]
+            if not keys: ok = False; break
+            v = m[max(keys)]                       # 그 달 또는 가장 최근 발표값
+            if fx:
+                rate = fxd[name].get(d, lastfx.get(name))
+                if rate is None: ok = False; break
+                lastfx[name] = rate
+                v = v / rate if fx[1] else v * rate
+            tot += v
+        if ok: rows.append([d, round(tot / 1e12, 3)])
+    return {"rows": rows, "n": len(local), "countries": [n_ for n_, *_ in local], "notes": notes, "freq": "daily"}
 
 data = {"updated": datetime.now(timezone.utc).isoformat(timespec="minutes"), "ohlc": {}}
-for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
-                     ("MSTR_1mo", "MSTR", "1mo"), ("NDX_1wk", "%5ENDX", "1wk"),
-                     ("MSTR_1d", "MSTR", "1d"), ("TQQQ_1d", "TQQQ", "1d"), ("NDX_1mo", "%5ENDX", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
+for key, sym, iv in [("MSTR_1d", "MSTR", "1d"), ("MSTR_1wk", "MSTR", "1wk"), ("MSTR_1mo", "MSTR", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
     try:
         data["ohlc"][key] = yahoo(sym, iv)
         r = data["ohlc"][key]
@@ -205,7 +200,7 @@ for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
 data["m2"] = global_m2()
 data["log"] = LOG[-40:]
 print("M2 rows", len(data["m2"]["rows"]), data["m2"]["countries"])
-if not all(k in data["ohlc"] for k in ("TQQQ_1mo", "MSTR_1wk", "MSTR_1mo", "NDX_1wk")):
+if not all(k in data["ohlc"] for k in ("MSTR_1d", "MSTR_1wk", "MSTR_1mo")):
     raise SystemExit("일부 시세를 받지 못함 — 기존 data.json 유지")
 with open("data.json", "w") as f:
     json.dump(data, f, separators=(",", ":"))
