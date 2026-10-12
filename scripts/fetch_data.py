@@ -4,18 +4,23 @@ from datetime import datetime, timezone
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
 
-def get(url, tries=3):
-    for i in range(tries):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
-                return r.read().decode()
-        except Exception as e:
-            if i == tries - 1:
-                raise
-            time.sleep(3 * (i + 1))
+LOG = []
+def get(url, tries=2, uas=(UA, {"User-Agent": "curl/8.5.0"}, {"User-Agent": "python-requests/2.32"})):
+    last = None
+    for ua in uas:
+        for i in range(tries):
+            t0 = time.time()
+            try:
+                with urllib.request.urlopen(urllib.request.Request(url, headers=ua), timeout=20) as r:
+                    return r.read().decode()
+            except Exception as e:
+                last = e
+                LOG.append(f"{url[:70]} ua={ua['User-Agent'][:12]} {type(e).__name__}:{e} {time.time()-t0:.0f}s")
+                time.sleep(2)
+    raise last
 
 def yahoo(sym, iv):
-    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=max&interval={iv}"))
+    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={"10y" if iv=="1wk" else "max"}&interval={iv}"))
     res = j["chart"]["result"][0]
     q = res["indicators"]["quote"][0]
     out = []
@@ -48,7 +53,7 @@ def global_m2():
                 s[k] = m[k] * mul * (1 / rate if inv else rate)
             series.append(s)
         except Exception as e:
-            print("M2 skip", sid, e)
+            LOG.append(f"M2 skip {sid}: {e}")
     if not series:
         return {"rows": [], "n": 0}
     months = sorted(k for k in series[0] if all(k in s for s in series))
@@ -63,6 +68,7 @@ for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
     except Exception as e:
         print("FAIL", key, e)
 data["m2"] = global_m2()
+data["log"] = LOG[-20:]
 print("M2 rows", len(data["m2"]["rows"]), "countries", data["m2"]["n"])
 if len(data["ohlc"]) < 4:
     raise SystemExit("일부 시세를 받지 못함 — 기존 data.json 유지")
