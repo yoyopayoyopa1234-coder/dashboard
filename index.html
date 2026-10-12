@@ -77,7 +77,12 @@ const PROXIES = [
 ];
 async function pfetch(u){ let last; for(const p of PROXIES){ try{ const r=await fetch(p(u)); if(r.ok) return r; last=new Error('HTTP '+r.status); }catch(e){ last=e; } } throw last||new Error('데이터 서버 연결 실패'); }
 
+let DATA=null;
+async function loadData(){ try{ const r=await fetch('data.json?'+Math.floor(Date.now()/600000)); if(r.ok) DATA=await r.json(); }catch(e){} }
+const KEY = { 'TQQQ:1mo':'TQQQ_1mo', 'MSTR:1wk':'MSTR_1wk', 'MSTR:1mo':'MSTR_1mo', '^NDX:1wk':'NDX_1wk' };
 async function ohlc(sym, iv){
+  const k = DATA && DATA.ohlc && DATA.ohlc[KEY[sym+':'+iv]];
+  if(k && k.length) return k.map(a=>({t:new Date(a[0]*1000),o:a[1],h:a[2],l:a[3],c:a[4]}));
   const ck=`o:${sym}:${iv}:${todayKey}`, c=store.get(ck); if(c) return c.map(d=>({...d,t:new Date(d.t)}));
   const r = await pfetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=max&interval=${iv}`);
   const res = (await r.json()).chart.result[0], q = res.indicators.quote[0], out=[];
@@ -91,6 +96,7 @@ async function fred(id){
   if(!out.length) throw new Error(id); return out;
 }
 async function globalM2(){
+  if(DATA && DATA.m2 && DATA.m2.rows.length) return { rows:DATA.m2.rows.map(a=>({t:a[0],v:a[1]})), n:DATA.m2.n };
   const ck=`m2:${todayKey}`, c=store.get(ck); if(c) return c;
   const parts = [
     { id:'M2SL',          mul:1e9 },                  // US, 십억달러
@@ -179,6 +185,8 @@ async function chartC(){
 
 function safe(fn, id){ return fn().catch(e=>{ $(id).innerHTML=`<span class="err">오류: ${e.message} — 새로고침을 눌러주세요.</span>`; }); }
 async function init(){
+  if(!DATA) await loadData();
+  if(DATA && DATA.updated) $('#today').textContent += ' · 데이터 ' + new Date(DATA.updated).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) + ' 기준';
   safe(chartA,'#sum-a'); safe(chartC,'#sum-c');
   await safe(chartB,'#sum-b');
   try{ M2 = await globalM2(); }catch(e){ M2 = false; }
@@ -189,18 +197,20 @@ document.querySelectorAll('[data-m2]').forEach(b=>b.addEventListener('click',()=
   m2sym=b.dataset.m2; $('#m2sym').textContent=m2sym;
   document.querySelectorAll('[data-m2]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); safe(chartB,'#sum-b'); }));
 $('#m2off').addEventListener('input',e=>{ $('#m2offv').textContent=e.target.value; safe(chartB,'#sum-b'); });
-$('#refresh').addEventListener('click',()=>{ try{ Object.keys(localStorage).filter(k=>/^(o|m2):/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){} M2=null; init(); });
+$('#refresh').addEventListener('click',()=>{ try{ Object.keys(localStorage).filter(k=>/^(o|m2):/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){} M2=null; DATA=null; $('#today').textContent=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'}); init(); });
 
 const PLOTLY_SRC = [
+  'https://cdn.jsdelivr.net/npm/plotly.js-finance-dist-min@2.35.2/plotly-finance.min.js',
   'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js',
   'https://unpkg.com/plotly.js-dist-min@2.35.2/plotly.min.js',
   'https://cdn.plot.ly/plotly-2.35.2.min.js',
 ];
 const loadScript = src => new Promise((ok,no)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=no; document.head.appendChild(s); });
 (async()=>{
+  const dataP = loadData();
   for(const src of PLOTLY_SRC){ try{ await loadScript(src); if(window.Plotly) break; }catch(e){} }
   if(!window.Plotly){ ['#sum-a','#sum-b','#sum-c'].forEach(id=>$(id).innerHTML='<span class="err">차트 라이브러리를 불러오지 못했습니다. 새로고침하세요.</span>'); return; }
-  init();
+  await dataP; init();
 })();
 </script>
 </body>
