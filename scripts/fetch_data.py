@@ -104,7 +104,7 @@ def global_m2():
 data = {"updated": datetime.now(timezone.utc).isoformat(timespec="minutes"), "ohlc": {}}
 for key, sym, iv in [("TQQQ_1mo", "TQQQ", "1mo"), ("MSTR_1wk", "MSTR", "1wk"),
                      ("MSTR_1mo", "MSTR", "1mo"), ("NDX_1wk", "%5ENDX", "1wk"),
-                     ("MSTR_1d", "MSTR", "1d"), ("NDX_1mo", "%5ENDX", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
+                     ("MSTR_1d", "MSTR", "1d"), ("TQQQ_1d", "TQQQ", "1d"), ("NDX_1mo", "%5ENDX", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
     try:
         data["ohlc"][key] = yahoo(sym, iv)
         r = data["ohlc"][key]

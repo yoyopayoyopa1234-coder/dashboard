@@ -141,6 +141,19 @@ if t["c"] > t["u"]:
 elif t["pb"] >= 0.8:
     t_read.append("<b>추세 자체는 상승입니다.</b> 월봉 BB 상단을 타고 오르는 흐름은 몇 달씩 이어지기도 합니다. 과열이 곧바로 하락을 뜻하지는 않습니다.")
 
+
+# TQQQ 일봉 5/218선·이격도
+qr, qh, ql, qc = cols("TQQQ_1d", "1d")
+if len(qc) > 220:
+    q218 = sma(qc, 218)[-1]; qenv = q218 * 1.07; q5 = sma(qc, 5)[-1]; qd = qc[-1] / sma(qc, 200)[-1] * 100
+    qd_max = max(x / y * 100 for x, y in zip(qc[-250:], sma(qc, 200)[-250:]) if y)
+    t_read.append(f"<b>일봉 5일선 {f(q5)} / 218일선 {f(q218)} / +7% 엔벨로프 {f(qenv)}, 이격도(200) {qd:.0f}.</b> " +
+                  ("이격도 160 이상은 과열 경계 구간입니다. " if qd >= 160 else ("이격도 50 이하는 과매도 구간입니다. " if qd <= 50 else f"과열선 160까지 여유가 있고(최근 1년 최고 {qd_max:.0f}), ")) +
+                  ("현재가는 엔벨로프 상단 위라 장기 추세가 강합니다." if qc[-1] > qenv else ("218일선 위입니다." if qc[-1] > q218 else "218일선 아래로 내려와 장기 추세가 꺾였습니다.")))
+    t_check = f'<li>TQQQ 일봉 이격도(200) {qd:.0f} — <span class="num">160</span> 위면 과열, <span class="num">50</span> 아래면 과매도 · 218일선 <span class="num">{f(q218, 0)}</span> 지지 여부</li>'
+else:
+    t_check = ""
+
 # MSTR 해석
 m_read = []
 if m["g12"] >= 3:
@@ -149,7 +162,7 @@ if m["g12"] >= 3:
 if have_d:
     m_read.append(f"<b>일봉 218일선 {f(ma218)} / +7% 엔벨로프 {f(env)}.</b> 현재가는 " +
                   ("218일선 위" + (", 엔벨로프 상단까지 넘어선 상태" if c > env else "") + "입니다. " if above218 else "218일선 아래입니다. ") +
-                  f"이격도(200)는 {disp:.0f}" + (f" (최근 1년 최저 {disp_min:.0f})" if disp_min else "") + ". 과열선 160, 과매도 50 기준입니다.")
+                  f"이격도(200)는 {disp:.0f}" + (f" (최근 1년 최저 {disp_min:.0f})" if disp_min else "") + ". " + ("160 이상 과열 경계 구간입니다." if disp >= 160 else ("50 이하 과매도 구간입니다." if disp <= 50 else "과열선 160, 과매도 50 사이입니다.")))
 rsi_dir = "반등 중" if m["rsi"] > m["rsi_prev"] else "하락 중"
 m_read.append(f"<b>월봉 RSI {m['rsi']:.1f}, 전월 {m['rsi_prev']:.1f}에서 {rsi_dir}.</b> " +
               ("50 위라 월봉 모멘텀은 상승 쪽입니다." if m["rsi"] >= 50 else "50을 넘으면 월봉 모멘텀이 상승 쪽으로 넘어갑니다."))
@@ -225,6 +238,7 @@ html = f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name
 <li>MSTR 월봉 RSI가 <span class="num">50</span>을 넘는지 (현재 {m["rsi"]:.1f})</li>
 <li>TQQQ 월봉 Vix Fix가 녹색으로 바뀌는지 (현재 {t["w"]:.1f} / {t["rh"]:.1f})</li>
 <li>TQQQ가 <span class="num">{f(t["u"], 0)}</span> 위로 마감하는지, <span class="num">{f(t["m"], 0)}</span> 쪽으로 밀리는지</li>
+{t_check}
 <li>Global M2 방향, FedWatch 다음 회의 인하 확률</li>
 </ol></section>
 

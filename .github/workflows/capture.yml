@@ -1,8 +1,6 @@
 name: capture-tradingview
 on:
   workflow_dispatch:
-  push:
-    paths: ["scripts/capture.py", ".github/workflows/capture.yml"]
 permissions:
   contents: write
 jobs:

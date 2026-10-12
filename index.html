@@ -39,6 +39,16 @@
   </header>
 
   <div class="panel">
+    <h2><span class="sym" id="dsym">MSTR</span><span class="desc">일봉 · 5/218선 · +7% 엔벨로프 · 이격도(200)</span>
+      <span class="tools">
+        <button class="btn" data-d="MSTR" aria-pressed="true" type="button">MSTR</button>
+        <button class="btn" data-d="TQQQ" aria-pressed="false" type="button">TQQQ</button>
+      </span></h2>
+    <div class="sum" id="sum-d">불러오는 중…</div>
+    <div class="plot" id="plot-d" style="height:620px"></div>
+  </div>
+
+  <div class="panel">
     <h2><span class="sym">TQQQ</span><span class="desc">월봉 · BB 20/2 · Williams Vix Fix</span></h2>
     <div class="sum" id="sum-a">불러오는 중…</div>
     <div class="plot" id="plot-a" style="height:620px"></div>
@@ -80,7 +90,7 @@ async function pfetch(u){ let last; for(const p of PROXIES){ try{ const r=await 
 
 let DATA=null;
 async function loadData(){ try{ const r=await fetch('data.json?'+Math.floor(Date.now()/600000)); if(r.ok) DATA=await r.json(); }catch(e){} }
-const KEY = { 'TQQQ:1mo':'TQQQ_1mo', 'MSTR:1wk':'MSTR_1wk', 'MSTR:1mo':'MSTR_1mo', '^NDX:1wk':'NDX_1wk' };
+const KEY = { 'TQQQ:1mo':'TQQQ_1mo', 'MSTR:1wk':'MSTR_1wk', 'MSTR:1mo':'MSTR_1mo', '^NDX:1wk':'NDX_1wk', 'MSTR:1d':'MSTR_1d', 'TQQQ:1d':'TQQQ_1d' };
 async function ohlc(sym, iv){
   const k = DATA && DATA.ohlc && DATA.ohlc[KEY[sym+':'+iv]];
   if(k && k.length) return k.map(a=>({t:new Date(a[0]*1000),o:a[1],h:a[2],l:a[3],c:a[4]}));
@@ -132,6 +142,25 @@ const cfg = { responsive:true, displaylogo:false, scrollZoom:true, modeBarButton
 const pct = (a,b) => { const p=(a/b-1)*100; return `<span class="${p>=0?'up':'dn'}">${p>=0?'+':''}${p.toFixed(2)}%</span>`; };
 const fmt = v => v.toLocaleString('en-US',{maximumFractionDigits:2});
 
+let dsym='MSTR';
+async function chartD(){
+  const r = await ohlc(dsym,'1d'), x=r.map(d=>d.t), c=r.map(d=>d.c), i=r.length-1;
+  const ma5=sma(c,5), ma218=sma(c,218), env=ma218.map(v=>v==null?null:v*1.07), ma200=sma(c,200), disp=c.map((v,k)=>ma200[k]==null?null:v/ma200[k]*100);
+  const st = disp[i]>=160?'<span class="up">과열(160 이상)</span>':disp[i]<=50?'<span class="on">과매도(50 이하)</span>':'';
+  $('#sum-d').innerHTML = `<b>${fmt(c[i])}</b> ${pct(c[i],c[i-1])} (전일 대비) · 5일선 ${fmt(ma5[i])} · 218일선 ${fmt(ma218[i])} (${c[i]>ma218[i]?'위':'아래'}) · 엔벨로프 상단 ${fmt(env[i])} (${c[i]>env[i]?'돌파':'아래'}) · 이격도 <b>${disp[i].toFixed(1)}</b> ${st}`;
+  const L = base(620); L.yaxis=ax({domain:[0.36,1], type:'log'}); L.yaxis2=ax({domain:[0,0.30]});
+  const back=Math.max(0,r.length-420); L.xaxis.range=[x[back], new Date(x[i].getTime()+10*86400000)]; L.xaxis.rangebreaks=[{bounds:['sat','mon']}];
+  L.shapes=[160,100,50].map(y=>({type:'line',xref:'paper',x0:0,x1:1,yref:'y2',y0:y,y1:y,line:{color:y===100?'#5d6675':(y===160?'#e5484d':'#3b82f6'),width:1,dash:y===100?'dot':'dash'}}));
+  L.annotations=[{xref:'paper',x:0,yref:'y2',y:160,text:'160',showarrow:false,xanchor:'left',yanchor:'bottom',font:{size:10,color:'#e5484d'}},
+                 {xref:'paper',x:0,yref:'y2',y:50,text:'50',showarrow:false,xanchor:'left',yanchor:'bottom',font:{size:10,color:'#3b82f6'}}];
+  const vis=disp.slice(back).filter(v=>v!=null); L.yaxis2.range=[Math.min(40,...vis)-5, Math.max(170,...vis)+5];
+  Plotly.react('plot-d', [ candle(r),
+    line(x,ma5,'#8fe388','5일선',{line:{color:'#8fe388',width:2}}),
+    line(x,ma218,'#3fae6a','218일선',{line:{color:'#3fae6a',width:1.2}}),
+    line(x,env,'#4f7cf7','엔벨로프 +7%',{line:{color:'#4f7cf7',width:1.6}}),
+    line(x,disp,'#2bb58f','이격도(200)',{yaxis:'y2', line:{color:'#2bb58f',width:1.4}}) ], L, cfg);
+}
+
 async function chartA(){
   const r = await ohlc('TQQQ','1mo'), x=r.map(d=>d.t), c=r.map(d=>d.c), b=bb(c), v=vixfix(r), i=r.length-1;
   const pb=(c[i]-b.lo[i])/(b.up[i]-b.lo[i]);
@@ -178,7 +207,7 @@ async function init(){
     $('#today').innerHTML += ' · 데이터 ' + u.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) + ' 기준'
       + (hrs>26 ? ' <span class="err">(갱신이 멈춤 — 확인 필요)</span>' : '');
   }
-  safe(chartA,'#sum-a'); safe(chartC,'#sum-c');
+  safe(chartD,'#sum-d'); safe(chartA,'#sum-a'); safe(chartC,'#sum-c');
   await safe(chartB,'#sum-b');
   try{ M2 = await globalM2(); }catch(e){ M2 = false; }
   safe(chartB,'#sum-b');
@@ -187,6 +216,9 @@ async function init(){
 document.querySelectorAll('[data-m2]').forEach(b=>b.addEventListener('click',()=>{
   m2sym=b.dataset.m2; $('#m2sym').textContent=m2sym;
   document.querySelectorAll('[data-m2]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); safe(chartB,'#sum-b'); }));
+document.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{
+  dsym=b.dataset.d; $('#dsym').textContent=dsym;
+  document.querySelectorAll('[data-d]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); safe(chartD,'#sum-d'); }));
 $('#m2off').addEventListener('input',e=>{ $('#m2offv').textContent=e.target.value; safe(chartB,'#sum-b'); });
 $('#refresh').addEventListener('click',()=>{ try{ Object.keys(localStorage).filter(k=>/^(o|m2):/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){} M2=null; DATA=null; $('#today').textContent=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'}); init(); });
 
@@ -200,7 +232,7 @@ const loadScript = src => new Promise((ok,no)=>{ const s=document.createElement(
 (async()=>{
   const dataP = loadData();
   for(const src of PLOTLY_SRC){ try{ await loadScript(src); if(window.Plotly) break; }catch(e){} }
-  if(!window.Plotly){ ['#sum-a','#sum-b','#sum-c'].forEach(id=>$(id).innerHTML='<span class="err">차트 라이브러리를 불러오지 못했습니다. 새로고침하세요.</span>'); return; }
+  if(!window.Plotly){ ['#sum-a','#sum-b','#sum-c','#sum-d'].forEach(id=>$(id).innerHTML='<span class="err">차트 라이브러리를 불러오지 못했습니다. 새로고침하세요.</span>'); return; }
   await dataP; init();
 })();
 </script>
