@@ -129,17 +129,28 @@ if m2_now:
 if btc:
     read.append(f"<b>비트코인 {f(btc['c'], 0)}달러, 이번 달 {pct(btc['c'], btc['prev']):+.1f}%, 월봉 RSI {btc['rsi']:.0f}.</b> MSTR은 비트코인 레버리지 성격이라 BTC가 꺾이면 위 신호들이 쉽게 무효가 됩니다. BTC 대비 프리미엄(mNAV)은 따로 확인하세요.")
 
+
+AL = json.load(open("alerts.json")) if os.path.exists("alerts.json") else None
+if AL:
+    al_rows = "".join(f'<li class="{"on" if x["on"] and x["kind"]=="buy" else ("warn" if x["on"] else "")}"><span>{"●" if x["on"] and x["kind"]=="buy" else ("▲" if x["on"] else "○")}</span> {x["name"]} <em>{x["val"]}</em></li>' for x in AL["conds"])
+    al_html = f'''<section class="card"><h2>매수 타이밍 <span class="pill st-{AL["stage"]}">{AL["stage"]}</span><span class="eyebrow">조건 {AL["score"]}/6</span></h2>
+<p>{AL["stage_txt"]}</p><ul class="alist">{al_rows}</ul><p class="fine">조건이 새로 켜지면 GitHub 앱 알림이 갑니다.</p></section>'''
+else:
+    al_html = ""
+
 css = open(os.path.join(os.path.dirname(__file__), "report.css")).read()
 now = datetime.now(KST); upd = datetime.fromisoformat(D["updated"]).astimezone(KST)
 html = f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>MSTR 기술적 점검</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
-<style>{css} tr.cur td {{ color:var(--accent); font-weight:600; }}</style></head><body><div class="wrap">
+<style>{css} tr.cur td {{ color:var(--accent); font-weight:600; }} .alist {{ list-style:none; margin:0; padding:0; display:grid; gap:6px; font-size:14px; }} .alist li {{ color:var(--muted); }} .alist li.on {{ color:var(--fg); }} .alist li.on span {{ color:var(--ok); }} .alist li.warn span {{ color:var(--warn); }} .alist em {{ font-style:normal; font-family:var(--mono); font-size:12px; color:var(--muted); margin-left:6px; }} .st-투매,.st-회복 {{ background:rgba(90,212,69,.16); color:#8be37a; }} .st-전환 {{ background:rgba(41,98,255,.2); color:#8fb0ff; }} .st-과열 {{ background:rgba(229,72,77,.16); color:#ff8a8d; }} .st-관망 {{ background:rgba(139,148,162,.18); color:#c9cfd8; }}</style></head><body><div class="wrap">
 <header><span class="eyebrow">{now:%Y.%m.%d %H:%M} 자동 생성 · 시세 {upd:%m.%d %H:%M} KST · <a href="./">차트 보기</a></span>
 <h1>MSTR 기술적 점검</h1></header>
 
 <div class="bl"><h3>한 줄 판단</h3>
 <div class="bl-row"><span class="tag">{f(c)}</span><p><span class="pill {cls}">{pill}</span>{head}</p></div></div>
+
+{al_html}
 
 <section class="card"><h2>지표 <span class="px">{f(c)}</span><span class="eyebrow">전일 {pct(c, dc[-2]):+.2f}% · 이번 달 {pct(mc[-1], M["mprev"]):+.1f}%</span></h2>
 <div class="gauges">
