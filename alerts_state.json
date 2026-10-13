@@ -1,0 +1,14 @@
+{
+ "on": {
+  "vix_on": false,
+  "disp_50": false,
+  "above218": true,
+  "above_env": true,
+  "rsi50": false,
+  "bbmid": false,
+  "disp_160": false,
+  "below218": false
+ },
+ "sent": {},
+ "stage": "회복"
+}
