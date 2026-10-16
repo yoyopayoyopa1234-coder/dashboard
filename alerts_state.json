@@ -2,15 +2,16 @@
  "on": {
   "vix_on": false,
   "disp_50": false,
-  "above218": true,
-  "above_env": true,
+  "above218": false,
+  "above_env": false,
   "rsi50": false,
   "bbmid": false,
   "disp_160": false,
-  "below218": false
+  "below218": true
  },
  "sent": {
-  "above_env": "2026-10-15T21:26+00:00"
+  "above_env": "2026-10-15T21:26+00:00",
+  "below218": "2026-10-16T16:42+00:00"
  },
- "stage": "회복"
+ "stage": "관망"
 }
