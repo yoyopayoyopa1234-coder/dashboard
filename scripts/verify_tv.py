@@ -33,3 +33,35 @@ with sync_playwright() as p:
 res["_at"] = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
 json.dump(res, open(f"{OUT}/verify.json", "w"), ensure_ascii=False, indent=1)
 print({k: (len(v.get("text", "")) if isinstance(v, dict) else v) for k, v in res.items()})
+
+# ── 대조 요약 ──
+def num(s): return float(s.replace(",", "").replace("−", "-"))
+def tv_vals(price_txt, tech_txt):
+    m1 = re.search(r"\n([\d,]+\.\d+)\s*(?:POINT|USD)", price_txt) or re.search(r"\|?\s*([\d,]+\.\d+)\s*\n?\s*(?:D|USD)", price_txt)
+    m2 = re.search(r"Simple Moving Average \(200\)\s+([\d,]+\.\d+)", tech_txt)
+    return (num(m1.group(1)) if m1 else None, num(m2.group(1)) if m2 else None)
+summ = {"at": res["_at"], "items": {}}
+try:
+    tq = json.load(open("tq.json"))
+except Exception:
+    tq = {}
+for key, pn, tn, band in (("spx", "tv_spx", "tv_spx_tech", 0.025), ("qqq", "tv_qqq", "tv_qqq_tech", 0.02)):
+    px, ma = tv_vals(res.get(pn, {}).get("text", ""), res.get(tn, {}).get("text", ""))
+    R = tq.get(key, {})
+    it = {"tv_px": px, "tv_ma": ma, "my_px": R.get("idx"), "my_ma": R.get("ma200"), "my_date": R.get("date")}
+    if px and ma:
+        it["tv_up"], it["tv_lo"] = round(ma * (1 + band), 2), round(ma * (1 - band), 2)
+        it["tv_zone"] = "above" if px > ma * (1 + band) else ("below" if px < ma * (1 - band) else "band")
+        if R.get("ma200"):
+            it["ma_diff_pct"] = round((R["ma200"] / ma - 1) * 100, 3)
+            it["px_diff_pct"] = round((R["idx"] / px - 1) * 100, 3)
+            it["zone_match"] = it["tv_zone"] == R.get("zone")
+    summ["items"][key] = it
+tqx = res.get("tv_tqqq", {}).get("text", "")
+m = re.search(r"TQQQ\s*\|?\s*\n?([\d,]+\.\d+)", tqx)
+summ["tqqq_tv"] = num(m.group(1)) if m else None
+summ["tqqq_my"] = tq.get("spx", {}).get("tqqq")
+ag = res.get("agitq", {}).get("text", "")
+summ["agitq"] = [l.strip() for l in ag.split("\n") if l.strip() and "새로고침" not in l][:20]
+json.dump(summ, open("verify_summary.json", "w"), ensure_ascii=False, indent=1)
+print(json.dumps(summ, ensure_ascii=False)[:1500])
