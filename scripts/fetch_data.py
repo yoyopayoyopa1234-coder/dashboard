@@ -36,6 +36,18 @@ def yahoo(sym, iv, rng=None):
                 (iv == "1wk" and (db - da).days < 7) or (iv == "1d" and da.date() == db.date()))
         if same:
             out[-2:] = [[a[0], a[1], max(a[2], b[2]), min(a[3], b[3]), b[4]]]
+    # 마지막 봉 종가가 빈 값으로 오는 경우 → 실시간 시세(meta)로 채움 (하루 전 가격으로 되돌아가는 오류 방지)
+    meta = res.get("meta", {})
+    px, mt = meta.get("regularMarketPrice"), meta.get("regularMarketTime")
+    if px and mt and out and mt > out[-1][0]:
+        dl, dm = datetime.fromtimestamp(out[-1][0], timezone.utc), datetime.fromtimestamp(mt, timezone.utc)
+        same = ((iv == "1mo" and (dl.year, dl.month) == (dm.year, dm.month)) or
+                (iv == "1wk" and (dm - dl).days < 7) or (iv == "1d" and dl.date() == dm.date()))
+        if same:
+            last = out[-1]; last[4] = round(px, 4); last[2] = max(last[2], px); last[3] = min(last[3], px)
+        else:
+            hi_ = meta.get("regularMarketDayHigh") or px; lo_ = meta.get("regularMarketDayLow") or px
+            out.append([mt, round(px, 4), round(max(hi_, px), 4), round(min(lo_, px), 4), round(px, 4)])
     return out  # [unix, o, h, l, c]
 
 def fred(sid):
