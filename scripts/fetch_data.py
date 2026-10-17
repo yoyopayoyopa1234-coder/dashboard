@@ -19,8 +19,8 @@ def get(url, tries=2, uas=({"User-Agent": "curl/8.5.0"}, UA)):
                 time.sleep(2)
     raise last
 
-def yahoo(sym, iv):
-    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={ {"1wk": "10y", "1d": "5y", "1mo": "20y"}.get(iv, "max") }&interval={iv}"))
+def yahoo(sym, iv, rng=None):
+    j = json.loads(get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={rng or {"1wk": "10y", "1d": "5y", "1mo": "20y"}.get(iv, "max")}&interval={iv}"))
     res = j["chart"]["result"][0]
     q = res["indicators"]["quote"][0]
     out = []
@@ -187,20 +187,25 @@ def global_m2():
         if ok: rows.append([d, round(tot / 1e12, 3)])
     return {"rows": rows, "n": len(local), "countries": [n_ for n_, *_ in local], "notes": notes, "freq": "daily"}
 
-data = {"updated": datetime.now(timezone.utc).isoformat(timespec="minutes"), "ohlc": {}}
-for key, sym, iv in [("MSTR_1d", "MSTR", "1d"), ("MSTR_1wk", "MSTR", "1wk"), ("MSTR_1mo", "MSTR", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
-    try:
-        data["ohlc"][key] = yahoo(sym, iv)
-        r = data["ohlc"][key]
-        if iv == "1mo" and len(r) > 3 and (r[-2][0] - r[-3][0]) > 45 * 86400:
-            LOG.append(f"{key}: 월봉 간격 이상(분기봉 의심)")
-        print(key, len(data["ohlc"][key]))
-    except Exception as e:
-        print("FAIL", key, e)
-data["m2"] = global_m2()
-data["log"] = LOG[-40:]
-print("M2 rows", len(data["m2"]["rows"]), data["m2"]["countries"])
-if not all(k in data["ohlc"] for k in ("MSTR_1d", "MSTR_1wk", "MSTR_1mo")):
-    raise SystemExit("일부 시세를 받지 못함 — 기존 data.json 유지")
-with open("data.json", "w") as f:
-    json.dump(data, f, separators=(",", ":"))
+def main():
+    data = {"updated": datetime.now(timezone.utc).isoformat(timespec="minutes"), "ohlc": {}}
+    for key, sym, iv in [("MSTR_1d", "MSTR", "1d"), ("MSTR_1wk", "MSTR", "1wk"), ("MSTR_1mo", "MSTR", "1mo"), ("BTC_1mo", "BTC-USD", "1mo")]:
+        try:
+            data["ohlc"][key] = yahoo(sym, iv)
+            r = data["ohlc"][key]
+            if iv == "1mo" and len(r) > 3 and (r[-2][0] - r[-3][0]) > 45 * 86400:
+                LOG.append(f"{key}: 월봉 간격 이상(분기봉 의심)")
+            print(key, len(data["ohlc"][key]))
+        except Exception as e:
+            print("FAIL", key, e)
+    data["m2"] = global_m2()
+    data["log"] = LOG[-40:]
+    print("M2 rows", len(data["m2"]["rows"]), data["m2"]["countries"])
+    if not all(k in data["ohlc"] for k in ("MSTR_1d", "MSTR_1wk", "MSTR_1mo")):
+        raise SystemExit("일부 시세를 받지 못함 — 기존 data.json 유지")
+    with open("data.json", "w") as f:
+        json.dump(data, f, separators=(",", ":"))
+
+
+if __name__ == "__main__":
+    main()
