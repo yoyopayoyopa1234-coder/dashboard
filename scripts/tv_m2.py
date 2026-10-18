@@ -31,11 +31,15 @@ def bars(symbol, interval="1D", n=3000):
         raw += r
         if "series_completed" in r or "symbol_error" in r or "series_error" in r: break
     ws.close()
-    m = re.search(r'"s":\[(.*?\])\]', raw)
-    if not m: raise ValueError(f"{symbol} 데이터 없음 ({raw[-160:]})")
     out = {}
-    for b in json.loads("[" + m.group(1) + "]"):
-        v = b["v"]; out[datetime.fromtimestamp(v[0], timezone.utc).strftime("%Y-%m-%d")] = v[4]
+    for fr in re.split(r"~m~\d+~m~", raw):
+        if not fr.startswith("{"): continue
+        try: j = json.loads(fr)
+        except ValueError: continue
+        if j.get("m") not in ("timescale_update", "du"): continue
+        for b in (j["p"][1].get("s1") or {}).get("s", []):
+            v = b["v"]; out[datetime.fromtimestamp(v[0], timezone.utc).strftime("%Y-%m-%d")] = v[4]
+    if not out: raise ValueError(f"{symbol} 데이터 없음 ({raw[-160:]})")
     return out
 
 def global_m2(log=print):
