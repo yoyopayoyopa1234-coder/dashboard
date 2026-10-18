@@ -1,5 +1,6 @@
 """매일 시세·M2를 받아 data.json으로 저장 (GitHub Actions에서 실행)."""
-import csv, io, json, time, urllib.request
+import csv, io, json, os, sys, time, urllib.request
+sys.path.insert(0, os.path.dirname(__file__))
 from datetime import datetime, timezone
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
@@ -210,7 +211,12 @@ def main():
             print(key, len(data["ohlc"][key]))
         except Exception as e:
             print("FAIL", key, e)
-    data["m2"] = global_m2()
+    try:
+        from tv_m2 import global_m2 as tv_global_m2
+        data["m2"] = tv_global_m2(LOG.append)
+    except Exception as e:
+        LOG.append(f"TradingView M2 실패 → 자체 계산 사용: {str(e)[:150]}")
+        data["m2"] = global_m2()
     data["log"] = LOG[-40:]
     print("M2 rows", len(data["m2"]["rows"]), data["m2"]["countries"])
     if not all(k in data["ohlc"] for k in ("MSTR_1d", "MSTR_1wk", "MSTR_1mo")):
