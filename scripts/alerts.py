@@ -16,7 +16,8 @@ def col(key, i): return [x[i] for x in O[key]]
 dc = col("MSTR_1d", 4)
 mh, ml, mc = col("MSTR_1mo", 2), col("MSTR_1mo", 3), col("MSTR_1mo", 4)
 c = dc[-1]
-ma218 = sma(dc, 200)[-1]   # 200일선 (변수명은 알림 상태 유지를 위해 그대로); env = ma218 * 1.07
+ma218 = sma(dc, 200)[-1]   # 200일선 (변수명은 알림 상태 유지를 위해 그대로)
+env = ma218 * 1.07          # 200일선 +7% 엔벨로프
 disp = c / sma(dc, 200)[-1] * 100
 bmid = bb(mc)[0][-1]
 mrsi = rsi(mc)[-1]
