@@ -16,7 +16,7 @@ def col(key, i): return [x[i] for x in O[key]]
 dc = col("MSTR_1d", 4)
 mh, ml, mc = col("MSTR_1mo", 2), col("MSTR_1mo", 3), col("MSTR_1mo", 4)
 c = dc[-1]
-ma218 = sma(dc, 218)[-1]; env = ma218 * 1.07
+ma218 = sma(dc, 200)[-1]   # 200일선 (변수명은 알림 상태 유지를 위해 그대로); env = ma218 * 1.07
 disp = c / sma(dc, 200)[-1] * 100
 bmid = bb(mc)[0][-1]
 mrsi = rsi(mc)[-1]
@@ -27,12 +27,12 @@ vix_recent = sum(sig[-12:])
 CONDS = [
     ("vix_on",   "buy",  "월봉 Vix Fix 투매 신호 점등",      sig[-1],          f"Vix Fix {w[-1]:.1f} / 기준 {rh[-1]:.1f}"),
     ("disp_50",  "buy",  "이격도(200) 50 이하 — 과매도",      disp <= 50,       f"이격도 {disp:.1f}"),
-    ("above218", "buy",  "218일선 위로 회복",                 c > ma218,        f"{c:.2f} vs 218일선 {ma218:.2f}"),
-    ("above_env","buy",  "218일선 +7% 엔벨로프 돌파",          c > env,          f"{c:.2f} vs 엔벨로프 {env:.2f}"),
+    ("above218", "buy",  "200일선 위로 회복",                 c > ma218,        f"{c:.2f} vs 200일선 {ma218:.2f}"),
+    ("above_env","buy",  "200일선 +7% 엔벨로프 돌파",          c > env,          f"{c:.2f} vs 엔벨로프 {env:.2f}"),
     ("rsi50",    "buy",  "월봉 RSI 50 돌파",                  mrsi >= 50,       f"월봉 RSI {mrsi:.1f}"),
     ("bbmid",    "buy",  "월봉 BB 중심선 돌파 (추세 전환)",    c > bmid,         f"{c:.2f} vs BB 중심 {bmid:.2f}"),
     ("disp_160", "warn", "이격도(200) 160 이상 — 과열 경고",   disp >= 160,      f"이격도 {disp:.1f}"),
-    ("below218", "warn", "218일선 이탈 — 반등 실패 경고",      c < ma218,        f"{c:.2f} vs 218일선 {ma218:.2f}"),
+    ("below218", "warn", "200일선 이탈 — 반등 실패 경고",      c < ma218,        f"{c:.2f} vs 200일선 {ma218:.2f}"),
 ]
 buy_on = [x for x in CONDS if x[1] == "buy" and x[3]]
 score = len(buy_on)
@@ -40,9 +40,9 @@ score = len(buy_on)
 if c > bmid and mrsi >= 50:
     stage, stage_txt = "전환", "추세 전환 확인 구간 — 월봉 BB 중심선과 RSI 50을 모두 넘었습니다."
 elif (vix_recent >= 3 or disp <= 50) and c > ma218:
-    stage, stage_txt = "회복", "투매 신호 이후 218일선을 회복한 구간 — 분할 매수 검토 구간입니다."
+    stage, stage_txt = "회복", "투매 신호 이후 200일선을 회복한 구간 — 분할 매수 검토 구간입니다."
 elif sig[-1] or disp <= 50:
-    stage, stage_txt = "투매", "공포(투매) 구간 — 역사적으로 바닥 후보였던 자리입니다. 218일선 회복 확인 전입니다."
+    stage, stage_txt = "투매", "공포(투매) 구간 — 역사적으로 바닥 후보였던 자리입니다. 200일선 회복 확인 전입니다."
 elif disp >= 160:
     stage, stage_txt = "과열", "과열 구간 — 신규 매수에 불리한 자리입니다."
 else:
