@@ -41,7 +41,7 @@ M["pb"] = (mc[-1] - M["lo"]) / (M["u"] - M["lo"])
 # ── 일봉 ──
 dr, dh, dl, dc = cols("MSTR_1d")
 c = dc[-1]
-ma218 = sma(dc, 200)[-1]; env = ma218 * 1.07   # 200일선 기준
+ma218 = sma(dc, 218)[-1]; env = ma218 * 1.07   # 218일선 기준
 s200 = sma(dc, 200); disp = c / s200[-1] * 100
 disp_hist = [x / y * 100 for x, y in zip(dc[-250:], s200[-250:]) if y]
 disp_min, disp_max = min(disp_hist), max(disp_hist)
@@ -69,11 +69,11 @@ else:
 if c > M["m"]:
     pill, cls, head = "추세 전환 확인", "p-turn", "월봉 BB 중심선 위로 올라섰습니다. 하락 추세 안의 반등을 넘어 추세 전환 쪽으로 무게가 실립니다."
 elif M["g12"] >= 3 and above218:
-    pill, cls, head = "바닥 신호 출현", "p-turn", "월봉 Vix Fix 녹색 군집(투매) 뒤 일봉 200일선을 회복했습니다. 다만 월봉 BB 중심선 아래라 아직 \"하락 추세 안의 반등\"입니다."
+    pill, cls, head = "바닥 신호 출현", "p-turn", "월봉 Vix Fix 녹색 군집(투매) 뒤 일봉 218일선을 회복했습니다. 다만 월봉 BB 중심선 아래라 아직 \"하락 추세 안의 반등\"입니다."
 elif M["g12"] >= 3:
-    pill, cls, head = "바닥 다지기", "p-mix", "최근 1년 안에 월봉 Vix Fix 투매 신호가 나왔지만 일봉 200일선 아래입니다. 바닥 확인 전 단계입니다."
+    pill, cls, head = "바닥 다지기", "p-mix", "최근 1년 안에 월봉 Vix Fix 투매 신호가 나왔지만 일봉 218일선 아래입니다. 바닥 확인 전 단계입니다."
 elif not above218 and M["rsi"] < 45:
-    pill, cls, head = "하락 추세", "p-hot", "일봉 200일선 아래, 월봉 RSI 45 미만입니다. 추세가 아래쪽입니다."
+    pill, cls, head = "하락 추세", "p-hot", "일봉 218일선 아래, 월봉 RSI 45 미만입니다. 추세가 아래쪽입니다."
 else:
     pill, cls, head = "중립", "p-mix", "뚜렷한 바닥·전환 신호 없이 중간 지대에 있습니다."
 if disp >= 160: head += " 이격도가 160을 넘어 단기 과열 구간입니다."
@@ -94,8 +94,8 @@ levels = sorted([
     (ath, f"사상 최고가 ({ath_d})", f"현재 고점 대비 {pct(c, ath):.0f}%"),
     (M["m"], "월봉 BB 중심", "추세 전환 확인선. 여기 위 월봉 마감이 핵심"),
     (swing, "최근 120일 고점", "직전 스윙 고점. 1차 저항"),
-    (env, "200일선 +7% 엔벨로프", "이 위에서 버티면 추세 강화"),
-    (ma218, "200일선", "장기 추세선. " + ("깨지면 반등 실패 신호" if above218 else "회복해야 바닥 확인")),
+    (env, "218일선 +7% 엔벨로프", "이 위에서 버티면 추세 강화"),
+    (ma218, "218일선", "장기 추세선. " + ("깨지면 반등 실패 신호" if above218 else "회복해야 바닥 확인")),
     (low, f"최근 저점 ({low_d})", "바닥 신호가 무효가 되는 선"),
 ], key=lambda t: -t[0])
 rows_html, placed = [], False
@@ -107,8 +107,8 @@ for p, nm, note in levels:
 if not placed: rows_html.append(f'<tr class="cur"><td>현재가</td><td class="r">{f(c)}</td><td class="r">—</td><td></td></tr>')
 
 read = []
-read.append(f"<b>일봉: 200일선 {f(ma218)} · +7% 엔벨로프 {f(env)}.</b> 현재가는 " +
-            ("엔벨로프 상단까지 넘어선 상태로, 장기 추세선을 확실히 회복했습니다." if above_env else ("200일선 위, 엔벨로프 아래입니다. 회복 초입입니다." if above218 else "200일선 아래입니다. 장기 추세는 아직 하락입니다.")) +
+read.append(f"<b>일봉: 218일선 {f(ma218)} · +7% 엔벨로프 {f(env)}.</b> 현재가는 " +
+            ("엔벨로프 상단까지 넘어선 상태로, 장기 추세선을 확실히 회복했습니다." if above_env else ("218일선 위, 엔벨로프 아래입니다. 회복 초입입니다." if above218 else "218일선 아래입니다. 장기 추세는 아직 하락입니다.")) +
             "")
 read.append(f"<b>이격도(200) {disp:.0f}.</b> 최근 1년 범위 {disp_min:.0f}~{disp_max:.0f}. " +
             ("160 이상 과열 구간으로, 과거 이 수준은 단기 고점 부근이었습니다." if disp >= 160 else
@@ -168,13 +168,13 @@ html = f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name
 <section class="card"><h2>해석</h2><div class="read">{"".join(f"<p>{x}</p>" for x in read)}</div></section>
 
 <section class="card"><h2>시나리오</h2><div class="sc">
-<div><span class="h b">추세 전환</span><span>{"200일선 지지 유지" if above218 else "200일선 " + f(ma218, 0) + " 회복"} → {f(swing, 0)} 돌파 → 월봉 BB 중심 {f(M["m"], 0)} 위 마감. 월봉 RSI 50 돌파가 선행 신호.</span></div>
+<div><span class="h b">추세 전환</span><span>{"218일선 지지 유지" if above218 else "218일선 " + f(ma218, 0) + " 회복"} → {f(swing, 0)} 돌파 → 월봉 BB 중심 {f(M["m"], 0)} 위 마감. 월봉 RSI 50 돌파가 선행 신호.</span></div>
 <div><span class="h n">박스권</span><span>{f(min(ma218, c), 0)}~{f(swing, 0)} 사이 등락. Vix Fix가 식으면서 바닥 다지기.</span></div>
-<div><span class="h s">반등 실패</span><span>200일선 아래 안착 후 저점 {f(low)} 재시험. 이 저점이 깨지면 바닥 판단 자체가 무효.</span></div>
+<div><span class="h s">반등 실패</span><span>218일선 아래 안착 후 저점 {f(low)} 재시험. 이 저점이 깨지면 바닥 판단 자체가 무효.</span></div>
 </div></section>
 
 <section class="card"><h2>매일 볼 것</h2><ol class="check">
-<li>일봉이 200일선 <span class="num">{f(ma218, 0)}</span> · 엔벨로프 <span class="num">{f(env, 0)}</span> 위에서 버티는지</li>
+<li>일봉이 218일선 <span class="num">{f(ma218, 0)}</span> · 엔벨로프 <span class="num">{f(env, 0)}</span> 위에서 버티는지</li>
 <li>이격도(200) <span class="num">{disp:.0f}</span> — <span class="num">160</span> 위 과열, <span class="num">50</span> 아래 과매도</li>
 <li><span class="num">{f(swing, 0)}</span> 돌파 여부, 월말엔 월봉 종가가 BB 중심 <span class="num">{f(M["m"], 0)}</span> 근처인지</li>
 <li>월봉 RSI <span class="num">50</span> 돌파 (현재 {M["rsi"]:.1f})</li>
