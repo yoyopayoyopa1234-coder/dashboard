@@ -26,4 +26,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
           git add data.json report.html alerts.json alerts_state.json
-          git diff --cached --quiet || (git commit -m "data: $(date -u +%F' '%H:%M)" && git push)
+          git diff --cached --quiet && exit 0
+          git commit -m "data: $(date -u +%F' '%H:%M)"
+          for i in 1 2 3 4; do git push && break; git pull --rebase -X theirs || { git rebase --abort; git pull --no-rebase -X ours; }; sleep 3; done
