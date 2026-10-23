@@ -3,7 +3,7 @@
   "vix_on": false,
   "disp_50": false,
   "above218": true,
-  "above_env": true,
+  "above_env": false,
   "rsi50": false,
   "bbmid": false,
   "disp_160": false,
