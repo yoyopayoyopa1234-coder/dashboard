@@ -1,6 +1,6 @@
 {
- "at": "2026-11-06T13:45+00:00",
- "price": 129.3,
+ "at": "2026-11-06T14:44+00:00",
+ "price": 128.38,
  "stage": "관망",
  "stage_txt": "뚜렷한 매수 조건이 겹치지 않은 구간입니다.",
  "score": 0,
@@ -10,56 +10,56 @@
    "kind": "buy",
    "name": "월봉 Vix Fix 투매 신호 점등",
    "on": false,
-   "val": "Vix Fix 69.4 / 기준 69.4"
+   "val": "Vix Fix 69.3 / 기준 69.4"
   },
   {
    "id": "disp_50",
    "kind": "buy",
    "name": "이격도(200) 50 이하 — 과매도",
    "on": false,
-   "val": "이격도 96.6"
+   "val": "이격도 96.0"
   },
   {
    "id": "above218",
    "kind": "buy",
    "name": "218일선 위로 회복",
    "on": false,
-   "val": "129.30 vs 218일선 136.29"
+   "val": "128.38 vs 218일선 136.15"
   },
   {
    "id": "above_env",
    "kind": "buy",
    "name": "218일선 +7% 엔벨로프 돌파",
    "on": false,
-   "val": "129.30 vs 엔벨로프 145.83"
+   "val": "128.38 vs 엔벨로프 145.68"
   },
   {
    "id": "rsi50",
    "kind": "buy",
    "name": "월봉 RSI 50 돌파",
    "on": false,
-   "val": "월봉 RSI 44.4"
+   "val": "월봉 RSI 44.3"
   },
   {
    "id": "bbmid",
    "kind": "buy",
    "name": "월봉 BB 중심선 돌파 (추세 전환)",
    "on": false,
-   "val": "129.30 vs BB 중심 213.26"
+   "val": "128.38 vs BB 중심 213.21"
   },
   {
    "id": "disp_160",
    "kind": "warn",
    "name": "이격도(200) 160 이상 — 과열 경고",
    "on": false,
-   "val": "이격도 96.6"
+   "val": "이격도 96.0"
   },
   {
    "id": "below218",
    "kind": "warn",
    "name": "218일선 이탈 — 반등 실패 경고",
    "on": true,
-   "val": "129.30 vs 218일선 136.29"
+   "val": "128.38 vs 218일선 136.15"
   }
  ],
  "sent": {
