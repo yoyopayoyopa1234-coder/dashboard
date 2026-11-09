@@ -1,6 +1,6 @@
 {
  "on": {
-  "vix_on": false,
+  "vix_on": true,
   "disp_50": false,
   "above218": false,
   "above_env": false,
@@ -12,7 +12,8 @@
  "sent": {
   "above_env": "2026-10-21T15:02+00:00",
   "below218": "2026-11-05T15:50+00:00",
-  "above218": "2026-11-03T16:32+00:00"
+  "above218": "2026-11-03T16:32+00:00",
+  "vix_on": "2026-11-09T15:18+00:00"
  },
- "stage": "관망"
+ "stage": "투매"
 }
